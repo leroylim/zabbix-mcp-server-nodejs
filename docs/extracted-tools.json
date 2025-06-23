@@ -1,0 +1,1843 @@
+{
+  "extractedAt": "2025-05-25T16:03:08.218Z",
+  "extractionMethod": "direct-source-parsing",
+  "totalTools": 67,
+  "totalSchemas": 22,
+  "categories": [
+    "Breach Monitoring",
+    "Bulk Operations",
+    "Domain Management",
+    "General",
+    "IP Management",
+    "Label Management",
+    "Notification Management",
+    "Questionnaire Management",
+    "Report Generation",
+    "Risk Management",
+    "Typosquat Detection",
+    "Vendor Management",
+    "Webhook Management"
+  ],
+  "sourceFiles": [
+    "breaches",
+    "bulk",
+    "domains",
+    "ips",
+    "labels",
+    "notifications",
+    "organization",
+    "questionnaires",
+    "reports",
+    "risks",
+    "subsidiaries",
+    "typosquat",
+    "vendors",
+    "vulnerabilities",
+    "webhooks"
+  ],
+  "schemas": [
+    "bulkOperationType",
+    "dateRange",
+    "dateTimeISO",
+    "dateYYYYMMDD",
+    "email",
+    "emailArray",
+    "ipAddress",
+    "labels",
+    "metadata",
+    "pagination",
+    "primaryHostname",
+    "questionnaireId",
+    "questionnaireStatus",
+    "recipient",
+    "riskFilters",
+    "severity",
+    "subsidiaryHostname",
+    "timeRange",
+    "vendorHostname",
+    "vendorId",
+    "vendorPrimaryHostname",
+    "vendorTier"
+  ],
+  "tools": [
+    {
+      "name": "upguard_add_custom_domains",
+      "description": "Add multiple custom domains to your account for continuous security monitoring and risk assessment",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "description": "List of labels for categorization and filtering."
+          }
+        },
+        "schemaReferences": [
+          "hostnames",
+          "labels"
+        ]
+      },
+      "category": "Domain Management",
+      "sourceFile": "domains"
+    },
+    {
+      "name": "upguard_add_custom_ips",
+      "description": "Add a list of custom IP addresses to your account for monitoring",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "description": "List of labels for categorization and filtering."
+          }
+        },
+        "schemaReferences": [
+          "ips",
+          "labels"
+        ]
+      },
+      "category": "IP Management",
+      "sourceFile": "ips"
+    },
+    {
+      "name": "upguard_bulk_deregister_hostnames",
+      "description": "Deregister multiple hostnames from bulk monitoring",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "hostnames"
+        ]
+      },
+      "category": "Bulk Operations",
+      "sourceFile": "bulk"
+    },
+    {
+      "name": "upguard_bulk_get_hostname_details",
+      "description": "Get detailed information about a specific hostname in bulk monitoring",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "hostname",
+          "omit_scan_info",
+          "omit_vendor",
+          "omit_labels"
+        ]
+      },
+      "category": "Bulk Operations",
+      "sourceFile": "bulk"
+    },
+    {
+      "name": "upguard_bulk_get_hostnames_stats",
+      "description": "Get statistics about bulk hostname monitoring including total registered, active, inactive, and remaining slots",
+      "inputSchema": null,
+      "category": "Bulk Operations",
+      "sourceFile": "bulk"
+    },
+    {
+      "name": "upguard_bulk_hostname_put_labels",
+      "description": "Update labels for a bulk hostname",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "description": "List of labels for categorization and filtering."
+          }
+        },
+        "schemaReferences": [
+          "hostname",
+          "labels"
+        ]
+      },
+      "category": "Bulk Operations",
+      "sourceFile": "bulk"
+    },
+    {
+      "name": "upguard_bulk_list_hostnames",
+      "description": "List all hostnames registered for bulk monitoring with pagination support",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "page_token",
+          "page_size",
+          "sort_by",
+          "sort_desc",
+          "include_inactive",
+          "include_labels",
+          "include_vendor",
+          "include_scan_info"
+        ]
+      },
+      "category": "Bulk Operations",
+      "sourceFile": "bulk"
+    },
+    {
+      "name": "upguard_bulk_register_hostnames",
+      "description": "Register multiple hostnames for bulk monitoring",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "hostnames"
+        ]
+      },
+      "category": "Bulk Operations",
+      "sourceFile": "bulk"
+    },
+    {
+      "name": "upguard_create_webhook",
+      "description": "Create a new webhook to receive automated notifications for specific security events and risk changes",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "name",
+          "hook_url",
+          "notification_type_ids",
+          "webhook_type"
+        ]
+      },
+      "category": "Webhook Management",
+      "sourceFile": "webhooks"
+    },
+    {
+      "name": "upguard_delete_webhook",
+      "description": "Delete an existing webhook to stop receiving notifications at the specified endpoint",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "id"
+        ]
+      },
+      "category": "Webhook Management",
+      "sourceFile": "webhooks"
+    },
+    {
+      "name": "upguard_get_account_risks",
+      "description": "Get a comprehensive list of active security risks detected for your account with advanced filtering and pagination",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "info",
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "description": "Risk severity level. Options: \"info\" (informational, lowest priority), \"low\" (minor issues), \"medium\" (moderate risk), \"high\" (significant risk requiring attention), \"critical\" (urgent, highest priority requiring immediate action)"
+          }
+        },
+        "schemaReferences": [
+          "severity",
+          "page_token",
+          "page_size",
+          "sort_by",
+          "sort_desc"
+        ]
+      },
+      "category": "Risk Management",
+      "sourceFile": "risks"
+    },
+    {
+      "name": "upguard_get_account_risks_diff",
+      "description": "Get differences in account risks over time",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "start_date",
+          "end_date"
+        ]
+      },
+      "category": "Risk Management",
+      "sourceFile": "risks"
+    },
+    {
+      "name": "upguard_get_available_reports",
+      "description": "Get list of custom report templates available for your account",
+      "inputSchema": null,
+      "category": "Report Generation",
+      "sourceFile": "reports"
+    },
+    {
+      "name": "upguard_get_available_risks",
+      "description": "Get a list of available risk types that can be detected by UpGuard",
+      "inputSchema": null,
+      "category": "Risk Management",
+      "sourceFile": "risks"
+    },
+    {
+      "name": "upguard_get_available_risks_v2",
+      "description": "Returns a list of available risks in the UpGuard platform with detailed info",
+      "inputSchema": null,
+      "category": "Risk Management",
+      "sourceFile": "risks"
+    },
+    {
+      "name": "upguard_get_breached_identities",
+      "description": "Get a list of breached identities for your account with filtering and sorting options",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "page_token",
+          "page_size",
+          "sort_by",
+          "sort_desc",
+          "breach_id"
+        ]
+      },
+      "category": "Breach Monitoring",
+      "sourceFile": "breaches"
+    },
+    {
+      "name": "upguard_get_custom_reports",
+      "description": "Get a list of custom report templates defined for your account to understand available reporting options",
+      "inputSchema": null,
+      "category": "Report Generation",
+      "sourceFile": "reports"
+    },
+    {
+      "name": "upguard_get_domain_details",
+      "description": "Retrieve comprehensive security details and scan results for a specific domain including risks, vulnerabilities, and configuration issues",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "primaryHostname": {
+            "type": "string",
+            "description": "Primary hostname (e.g., 'example.com').",
+            "minLength": 1,
+            "maxLength": 253,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]$"
+          }
+        },
+        "schemaReferences": [
+          "primaryHostname"
+        ]
+      },
+      "category": "Domain Management",
+      "sourceFile": "domains"
+    },
+    {
+      "name": "upguard_get_domains",
+      "description": "Get a list of domains for your account with filtering and pagination options",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "description": "List of labels for categorization and filtering."
+          }
+        },
+        "schemaReferences": [
+          "labels",
+          "page_token",
+          "page_size",
+          "sort_by",
+          "sort_desc"
+        ]
+      },
+      "category": "Domain Management",
+      "sourceFile": "domains"
+    },
+    {
+      "name": "upguard_get_identity_breach",
+      "description": "Get comprehensive details for a specific identity breach including affected data types, breach timeline, and impact assessment",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "id"
+        ]
+      },
+      "category": "Breach Monitoring",
+      "sourceFile": "breaches"
+    },
+    {
+      "name": "upguard_get_ip_details",
+      "description": "Retrieve detailed information for a specific IP address including scan results",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "ip"
+        ]
+      },
+      "category": "IP Management",
+      "sourceFile": "ips"
+    },
+    {
+      "name": "upguard_get_ips",
+      "description": "Get a list of IP addresses for your account with filtering and pagination options",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "description": "List of labels for categorization and filtering."
+          }
+        },
+        "schemaReferences": [
+          "labels",
+          "page_token",
+          "page_size",
+          "sort_by",
+          "sort_desc"
+        ]
+      },
+      "category": "IP Management",
+      "sourceFile": "ips"
+    },
+    {
+      "name": "upguard_get_labels",
+      "description": "Get the list of registered labels",
+      "inputSchema": null,
+      "category": "Label Management",
+      "sourceFile": "labels"
+    },
+    {
+      "name": "upguard_get_notifications",
+      "description": "Get a list of notifications for your organization",
+      "inputSchema": null,
+      "category": "Notification Management",
+      "sourceFile": "notifications"
+    },
+    {
+      "name": "upguard_get_organisation",
+      "description": "Get the current organisation",
+      "inputSchema": null,
+      "category": "General",
+      "sourceFile": "organization"
+    },
+    {
+      "name": "upguard_get_questionnaire_types",
+      "description": "Get a list of available questionnaire types that can be sent to vendors",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "usage_type"
+        ]
+      },
+      "category": "Questionnaire Management",
+      "sourceFile": "questionnaires"
+    },
+    {
+      "name": "upguard_get_ranges",
+      "description": "Get a list of IP ranges for your account with filtering and sorting options",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "description": "List of labels for categorization and filtering."
+          }
+        },
+        "schemaReferences": [
+          "labels",
+          "page_token",
+          "page_size",
+          "sort_by",
+          "sort_desc"
+        ]
+      },
+      "category": "General",
+      "sourceFile": "ips"
+    },
+    {
+      "name": "upguard_get_report_export_status",
+      "description": "Check the status of a queued report and get download link when ready",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "queued_report_id"
+        ]
+      },
+      "category": "Report Generation",
+      "sourceFile": "reports"
+    },
+    {
+      "name": "upguard_get_report_status",
+      "description": "Check the status of a queued report and get download link when ready",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "queued_report_id"
+        ]
+      },
+      "category": "Report Generation",
+      "sourceFile": "reports"
+    },
+    {
+      "name": "upguard_get_risk_details",
+      "description": "Get detailed information about a specific risk",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "risk_id"
+        ]
+      },
+      "category": "Risk Management",
+      "sourceFile": "risks"
+    },
+    {
+      "name": "upguard_get_subsidiaries",
+      "description": "Get a list of subsidiaries",
+      "inputSchema": null,
+      "category": "General",
+      "sourceFile": "subsidiaries"
+    },
+    {
+      "name": "upguard_get_subsidiary_domain_details",
+      "description": "Retrieve details for a domain",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "subsidiary_primary_hostname",
+          "hostname"
+        ]
+      },
+      "category": "Domain Management",
+      "sourceFile": "subsidiaries"
+    },
+    {
+      "name": "upguard_get_subsidiary_domains",
+      "description": "List subsidiary domains",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "description": "List of labels for categorization and filtering."
+          }
+        },
+        "schemaReferences": [
+          "subsidiary_primary_hostname",
+          "active",
+          "inactive",
+          "labels",
+          "page_token",
+          "page_size",
+          "sort_by",
+          "sort_desc"
+        ]
+      },
+      "category": "Domain Management",
+      "sourceFile": "subsidiaries"
+    },
+    {
+      "name": "upguard_get_typosquat_details",
+      "description": "Get typosquat domain details from UpGuard",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "domain"
+        ]
+      },
+      "category": "Typosquat Detection",
+      "sourceFile": "typosquat"
+    },
+    {
+      "name": "upguard_get_vendor",
+      "description": "Retrieve comprehensive vendor security details including risk scores, vulnerabilities, and compliance status with optional ad-hoc report generation",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "primaryHostname": {
+            "type": "string",
+            "description": "Primary hostname (e.g., 'example.com').",
+            "minLength": 1,
+            "maxLength": 253,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]$"
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "description": "List of labels for categorization and filtering."
+          }
+        },
+        "schemaReferences": [
+          "primaryHostname",
+          "id",
+          "generate_ad_hoc_report",
+          "start_monitoring",
+          "labels",
+          "tier",
+          "wait_for_scan"
+        ]
+      },
+      "category": "Vendor Management",
+      "sourceFile": "vendors"
+    },
+    {
+      "name": "upguard_get_vendor_additional_evidence",
+      "description": "Retrieve specific additional evidence documents by ID for detailed vendor security documentation",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "evidence_ids",
+          "zip"
+        ]
+      },
+      "category": "Vendor Management",
+      "sourceFile": "vendors"
+    },
+    {
+      "name": "upguard_get_vendor_additional_evidence_list",
+      "description": "Get a chronological list of additional evidence documents uploaded for vendor security assessments",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "hostname"
+        ]
+      },
+      "category": "Vendor Management",
+      "sourceFile": "vendors"
+    },
+    {
+      "name": "upguard_get_vendor_domains",
+      "description": "Get domains for a specific vendor",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "vendor_primary_hostname"
+        ]
+      },
+      "category": "Vendor Management",
+      "sourceFile": "vendors"
+    },
+    {
+      "name": "upguard_get_vendor_ips",
+      "description": "Get IP addresses for a specific vendor",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "vendor_primary_hostname"
+        ]
+      },
+      "category": "Vendor Management",
+      "sourceFile": "vendors"
+    },
+    {
+      "name": "upguard_get_vendor_questionnaire_attachments",
+      "description": "List vendor questionnaire attachments",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "questionnaireId": {
+            "type": "string",
+            "description": "Unique identifier for a questionnaire.",
+            "minLength": 1
+          }
+        },
+        "schemaReferences": [
+          "questionnaireId"
+        ]
+      },
+      "category": "Vendor Management",
+      "sourceFile": "questionnaires"
+    },
+    {
+      "name": "upguard_get_vendor_questionnaire_risks",
+      "description": "Get security risks identified through vendor questionnaire responses and assessments",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "info",
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "description": "Risk severity level. Options: \"info\" (informational, lowest priority), \"low\" (minor issues), \"medium\" (moderate risk), \"high\" (significant risk requiring attention), \"critical\" (urgent, highest priority requiring immediate action)"
+          }
+        },
+        "schemaReferences": [
+          "severity",
+          "vendor_primary_hostname",
+          "page_token",
+          "page_size",
+          "sort_by",
+          "sort_desc"
+        ]
+      },
+      "category": "Risk Management",
+      "sourceFile": "risks"
+    },
+    {
+      "name": "upguard_get_vendor_questionnaire_risks_v2",
+      "description": "Get enhanced security risks from vendor questionnaire responses using the latest assessment methodology (v2)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "info",
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "description": "Risk severity level. Options: \"info\" (informational, lowest priority), \"low\" (minor issues), \"medium\" (moderate risk), \"high\" (significant risk requiring attention), \"critical\" (urgent, highest priority requiring immediate action)"
+          }
+        },
+        "schemaReferences": [
+          "severity",
+          "vendor_primary_hostname",
+          "page_token",
+          "page_size",
+          "sort_by",
+          "sort_desc"
+        ]
+      },
+      "category": "Risk Management",
+      "sourceFile": "risks"
+    },
+    {
+      "name": "upguard_get_vendor_questionnaires",
+      "description": "Get a list of questionnaires for a specific vendor",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "vendor_primary_hostname",
+          "usage_type",
+          "page_token",
+          "page_size"
+        ]
+      },
+      "category": "Vendor Management",
+      "sourceFile": "questionnaires"
+    },
+    {
+      "name": "upguard_get_vendor_questionnaires_v2",
+      "description": "List vendor questionnaires (V2)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "primaryHostname": {
+            "type": "string",
+            "description": "Primary hostname (e.g., 'example.com').",
+            "minLength": 1,
+            "maxLength": 253,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]$"
+          },
+          "vendorId": {
+            "type": "string",
+            "description": "Unique identifier for a vendor.",
+            "minLength": 1
+          }
+        },
+        "schemaReferences": [
+          "primaryHostname",
+          "vendorId",
+          "usage_type",
+          "exclude_archived"
+        ]
+      },
+      "category": "Vendor Management",
+      "sourceFile": "questionnaires"
+    },
+    {
+      "name": "upguard_get_vendor_risks",
+      "description": "Get detailed security risks for a specific vendor to assess their cybersecurity posture and compliance status",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "primaryHostname": {
+            "type": "string",
+            "description": "Primary hostname (e.g., 'example.com').",
+            "minLength": 1,
+            "maxLength": 253,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]$"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "info",
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "description": "Risk severity level. Options: \"info\" (informational, lowest priority), \"low\" (minor issues), \"medium\" (moderate risk), \"high\" (significant risk requiring attention), \"critical\" (urgent, highest priority requiring immediate action)"
+          }
+        },
+        "schemaReferences": [
+          "primaryHostname",
+          "severity",
+          "page_token",
+          "page_size",
+          "sort_by",
+          "sort_desc"
+        ]
+      },
+      "category": "Risk Management",
+      "sourceFile": "risks"
+    },
+    {
+      "name": "upguard_get_vendor_risks_diff",
+      "description": "Get risk changes for a specific vendor over a time period with detailed change tracking",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "vendorPrimaryHostname": {
+            "type": "string",
+            "description": "Primary hostname of the vendor (e.g., 'example.com').",
+            "minLength": 1,
+            "maxLength": 253,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]$"
+          }
+        },
+        "schemaReferences": [
+          "vendorPrimaryHostname",
+          "start_date",
+          "end_date",
+          "page_token",
+          "page_size",
+          "sort_by",
+          "sort_desc"
+        ]
+      },
+      "category": "Risk Management",
+      "sourceFile": "risks"
+    },
+    {
+      "name": "upguard_get_vendor_vulnerabilities",
+      "description": "Get vulnerability information for a vendor",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "primaryHostname": {
+            "type": "string",
+            "description": "Primary hostname (e.g., 'example.com').",
+            "minLength": 1,
+            "maxLength": 253,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]$"
+          }
+        },
+        "schemaReferences": [
+          "primaryHostname",
+          "page_token",
+          "page_size"
+        ]
+      },
+      "category": "Vendor Management",
+      "sourceFile": "vulnerabilities"
+    },
+    {
+      "name": "upguard_get_vendors_risks_diff",
+      "description": "Get risk changes for multiple vendors over a time period with detailed change tracking",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "start_date",
+          "end_date",
+          "page_token",
+          "page_size",
+          "sort_by",
+          "sort_desc"
+        ]
+      },
+      "category": "Risk Management",
+      "sourceFile": "risks"
+    },
+    {
+      "name": "upguard_get_webhook_notification_types",
+      "description": "Get a comprehensive list of available webhook notification types and their descriptions for your organization",
+      "inputSchema": null,
+      "category": "Webhook Management",
+      "sourceFile": "webhooks"
+    },
+    {
+      "name": "upguard_get_webhook_sample_data",
+      "description": "Get example webhook payload data for testing and development purposes to understand notification formats",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "id",
+          "notification_type_ids"
+        ]
+      },
+      "category": "Webhook Management",
+      "sourceFile": "webhooks"
+    },
+    {
+      "name": "upguard_list_custom_report_templates",
+      "description": "List all available custom report templates that can be used for generating reports",
+      "inputSchema": null,
+      "category": "Report Generation",
+      "sourceFile": "reports"
+    },
+    {
+      "name": "upguard_list_monitored_vendors",
+      "description": "List monitored vendors",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "description": "List of labels for categorization and filtering."
+          }
+        },
+        "schemaReferences": [
+          "include_ad_hoc_reports",
+          "page_token",
+          "page_size",
+          "labels",
+          "include_risks"
+        ]
+      },
+      "category": "Vendor Management",
+      "sourceFile": "vendors"
+    },
+    {
+      "name": "upguard_list_typosquat_domains",
+      "description": "Get list of typosquat domains from UpGuard",
+      "inputSchema": null,
+      "category": "Domain Management",
+      "sourceFile": "typosquat"
+    },
+    {
+      "name": "upguard_list_webhooks",
+      "description": "List all registered webhooks configured for your account to receive real-time security notifications and alerts",
+      "inputSchema": null,
+      "category": "Webhook Management",
+      "sourceFile": "webhooks"
+    },
+    {
+      "name": "upguard_queue_report",
+      "description": "Queue a custom report for generation with specified parameters and filters",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "emailArray": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "email"
+            },
+            "description": "Array of email addresses (max 5)."
+          }
+        },
+        "schemaReferences": [
+          "emailArray",
+          "report_type",
+          "custom_report_uuid",
+          "post_webhook_url",
+          "asset_portfolio_names",
+          "vendor_portfolio_names",
+          "vendor_id",
+          "vendor_primary_hostname",
+          "filter_by_vendor_hostnames",
+          "filename_prefix",
+          "wait_for_data"
+        ]
+      },
+      "category": "Report Generation",
+      "sourceFile": "reports"
+    },
+    {
+      "name": "upguard_queue_report_export",
+      "description": "Queue a custom report for generation with specified parameters and filters",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "emailArray": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "email"
+            },
+            "description": "Array of email addresses (max 5)."
+          }
+        },
+        "schemaReferences": [
+          "emailArray",
+          "report_type",
+          "custom_report_uuid",
+          "post_webhook_url",
+          "asset_portfolio_names",
+          "vendor_portfolio_names",
+          "vendor_id",
+          "vendor_primary_hostname",
+          "filter_by_vendor_hostnames",
+          "filename_prefix",
+          "wait_for_data"
+        ]
+      },
+      "category": "Report Generation",
+      "sourceFile": "reports"
+    },
+    {
+      "name": "upguard_remove_custom_domains",
+      "description": "Remove multiple custom domains from your account monitoring to stop tracking their security status",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "schemaReferences": [
+          "hostnames"
+        ]
+      },
+      "category": "Domain Management",
+      "sourceFile": "domains"
+    },
+    {
+      "name": "upguard_send_relationship_questionnaire",
+      "description": "Send a relationship questionnaire about a vendor",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "primaryHostname": {
+            "type": "string",
+            "description": "Primary hostname (e.g., 'example.com').",
+            "minLength": 1,
+            "maxLength": 253,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]$"
+          },
+          "email": {
+            "type": "string",
+            "description": "Valid email address (e.g., 'user@example.com').",
+            "format": "email"
+          }
+        },
+        "schemaReferences": [
+          "primaryHostname",
+          "email",
+          "message"
+        ]
+      },
+      "category": "IP Management",
+      "sourceFile": "questionnaires"
+    },
+    {
+      "name": "upguard_send_vendor_questionnaire",
+      "description": "Send a security questionnaire to a vendor",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "primaryHostname": {
+            "type": "string",
+            "description": "Primary hostname (e.g., 'example.com').",
+            "minLength": 1,
+            "maxLength": 253,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]$"
+          }
+        },
+        "schemaReferences": [
+          "primaryHostname",
+          "questionnaire_type_id",
+          "due_date",
+          "message",
+          "email_title",
+          "recipients"
+        ]
+      },
+      "category": "Vendor Management",
+      "sourceFile": "questionnaires"
+    },
+    {
+      "name": "upguard_start_monitoring_vendor",
+      "description": "Begin continuous security monitoring for a vendor with customizable tier level and labeling for risk management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "primaryHostname": {
+            "type": "string",
+            "description": "Primary hostname (e.g., 'example.com').",
+            "minLength": 1,
+            "maxLength": 253,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]$"
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "description": "List of labels for categorization and filtering."
+          }
+        },
+        "schemaReferences": [
+          "primaryHostname",
+          "labels",
+          "tier",
+          "wait_for_scan"
+        ]
+      },
+      "category": "Vendor Management",
+      "sourceFile": "vendors"
+    },
+    {
+      "name": "upguard_stop_monitoring_vendor",
+      "description": "Stop continuous security monitoring for a vendor and remove them from your active vendor portfolio",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "primaryHostname": {
+            "type": "string",
+            "description": "Primary hostname (e.g., 'example.com').",
+            "minLength": 1,
+            "maxLength": 253,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]$"
+          }
+        },
+        "schemaReferences": [
+          "primaryHostname"
+        ]
+      },
+      "category": "Vendor Management",
+      "sourceFile": "vendors"
+    },
+    {
+      "name": "upguard_update_domain_labels",
+      "description": "Assign or remove labels for a domain to improve organization and filtering (pass empty array to remove all labels)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "primaryHostname": {
+            "type": "string",
+            "description": "Primary hostname (e.g., 'example.com').",
+            "minLength": 1,
+            "maxLength": 253,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]$"
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "description": "List of labels for categorization and filtering."
+          }
+        },
+        "schemaReferences": [
+          "primaryHostname",
+          "labels"
+        ]
+      },
+      "category": "Domain Management",
+      "sourceFile": "domains"
+    },
+    {
+      "name": "upguard_update_ip_labels",
+      "description": "Assign or remove labels for an IP address (pass empty array to remove all labels)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "description": "List of labels for categorization and filtering."
+          }
+        },
+        "schemaReferences": [
+          "ip",
+          "labels"
+        ]
+      },
+      "category": "IP Management",
+      "sourceFile": "ips"
+    },
+    {
+      "name": "upguard_update_subsidiary_domain_labels",
+      "description": "Assign labels to a domain",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "description": "List of labels for categorization and filtering."
+          }
+        },
+        "schemaReferences": [
+          "subsidiary_primary_hostname",
+          "hostname",
+          "labels"
+        ]
+      },
+      "category": "Domain Management",
+      "sourceFile": "subsidiaries"
+    },
+    {
+      "name": "upguard_update_vendor_domain_labels",
+      "description": "Assign labels to a domain",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "description": "List of labels for categorization and filtering."
+          }
+        },
+        "schemaReferences": [
+          "vendor_primary_hostname",
+          "hostname",
+          "labels"
+        ]
+      },
+      "category": "Vendor Management",
+      "sourceFile": "vendors"
+    },
+    {
+      "name": "upguard_update_vendor_ip_labels",
+      "description": "Update labels for a vendor IP address",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "description": "List of labels for categorization and filtering."
+          }
+        },
+        "schemaReferences": [
+          "vendor_primary_hostname",
+          "ip",
+          "labels"
+        ]
+      },
+      "category": "Vendor Management",
+      "sourceFile": "vendors"
+    },
+    {
+      "name": "upguard_update_vendor_labels",
+      "description": "Assign or remove labels for a vendor to improve organization and risk categorization (pass empty array to remove all labels)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "vendorPrimaryHostname": {
+            "type": "string",
+            "description": "Primary hostname of the vendor (e.g., 'example.com').",
+            "minLength": 1,
+            "maxLength": 253,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]$"
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50,
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "description": "List of labels for categorization and filtering."
+          }
+        },
+        "schemaReferences": [
+          "vendorPrimaryHostname",
+          "labels"
+        ]
+      },
+      "category": "Vendor Management",
+      "sourceFile": "vendors"
+    }
+  ],
+  "schemaDefinitions": {
+    "vendorHostname": {
+      "_def": {
+        "checks": [
+          {
+            "kind": "min",
+            "value": 1,
+            "message": "Vendor hostname cannot be empty"
+          },
+          {
+            "kind": "max",
+            "value": 253,
+            "message": "Hostname too long (max 253 characters)"
+          },
+          {
+            "kind": "regex",
+            "regex": {},
+            "message": "Invalid hostname format"
+          }
+        ],
+        "typeName": "ZodString",
+        "coerce": false,
+        "description": "Primary hostname of the vendor (e.g., 'example.com')."
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      }
+    },
+    "vendorPrimaryHostname": {
+      "_def": {
+        "checks": [
+          {
+            "kind": "min",
+            "value": 1,
+            "message": "Vendor hostname cannot be empty"
+          },
+          {
+            "kind": "max",
+            "value": 253,
+            "message": "Hostname too long (max 253 characters)"
+          },
+          {
+            "kind": "regex",
+            "regex": {},
+            "message": "Invalid hostname format"
+          }
+        ],
+        "typeName": "ZodString",
+        "coerce": false,
+        "description": "Primary hostname of the vendor (e.g., 'example.com')."
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      }
+    },
+    "primaryHostname": {
+      "_def": {
+        "checks": [
+          {
+            "kind": "min",
+            "value": 1,
+            "message": "Primary hostname cannot be empty"
+          },
+          {
+            "kind": "max",
+            "value": 253,
+            "message": "Hostname too long (max 253 characters)"
+          },
+          {
+            "kind": "regex",
+            "regex": {},
+            "message": "Invalid hostname format"
+          }
+        ],
+        "typeName": "ZodString",
+        "coerce": false,
+        "description": "Primary hostname (e.g., 'example.com')."
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      }
+    },
+    "subsidiaryHostname": {
+      "_def": {
+        "checks": [
+          {
+            "kind": "min",
+            "value": 1,
+            "message": "Subsidiary hostname cannot be empty"
+          },
+          {
+            "kind": "max",
+            "value": 253,
+            "message": "Hostname too long (max 253 characters)"
+          },
+          {
+            "kind": "regex",
+            "regex": {},
+            "message": "Invalid hostname format"
+          }
+        ],
+        "typeName": "ZodString",
+        "coerce": false,
+        "description": "Primary hostname of the subsidiary (e.g., 'subsidiary.example.com')."
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      }
+    },
+    "labels": {
+      "_def": {
+        "type": {
+          "_def": {
+            "checks": [
+              {
+                "kind": "min",
+                "value": 1,
+                "message": "Label cannot be empty"
+              },
+              {
+                "kind": "max",
+                "value": 50,
+                "message": "Label too long"
+              },
+              {
+                "kind": "regex",
+                "regex": {},
+                "message": "Labels can only contain alphanumeric characters, underscores, and hyphens"
+              }
+            ],
+            "typeName": "ZodString",
+            "coerce": false
+          },
+          "~standard": {
+            "version": 1,
+            "vendor": "zod"
+          }
+        },
+        "minLength": null,
+        "maxLength": {
+          "value": 10,
+          "message": "Maximum 10 labels allowed"
+        },
+        "exactLength": null,
+        "typeName": "ZodArray",
+        "description": "List of labels for categorization and filtering."
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      }
+    },
+    "vendorTier": {
+      "_def": {
+        "checks": [
+          {
+            "kind": "int",
+            "message": "Tier must be an integer"
+          },
+          {
+            "kind": "min",
+            "value": 1,
+            "inclusive": true,
+            "message": "Tier must be at least 1"
+          },
+          {
+            "kind": "max",
+            "value": 3,
+            "inclusive": true,
+            "message": "Tier cannot exceed 3"
+          }
+        ],
+        "typeName": "ZodNumber",
+        "coerce": false,
+        "description": "Tier level for the vendor (1-3, where 1 is highest priority)."
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      }
+    },
+    "severity": {
+      "_def": {
+        "values": [
+          "info",
+          "low",
+          "medium",
+          "high",
+          "critical"
+        ],
+        "typeName": "ZodEnum",
+        "description": "Risk severity level. Options: \"info\" (informational, lowest priority), \"low\" (minor issues), \"medium\" (moderate risk), \"high\" (significant risk requiring attention), \"critical\" (urgent, highest priority requiring immediate action)"
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      }
+    },
+    "dateYYYYMMDD": {
+      "_def": {
+        "schema": {
+          "_def": {
+            "checks": [
+              {
+                "kind": "regex",
+                "regex": {},
+                "message": "Date must be in YYYY-MM-DD format"
+              }
+            ],
+            "typeName": "ZodString",
+            "coerce": false
+          },
+          "~standard": {
+            "version": 1,
+            "vendor": "zod"
+          }
+        },
+        "typeName": "ZodEffects",
+        "effect": {
+          "type": "refinement"
+        },
+        "description": "Date in YYYY-MM-DD format (e.g., '2024-03-20')."
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      }
+    },
+    "dateTimeISO": {
+      "_def": {
+        "checks": [
+          {
+            "kind": "datetime",
+            "precision": null,
+            "offset": false,
+            "local": false,
+            "message": "Must be valid ISO 8601 datetime"
+          }
+        ],
+        "typeName": "ZodString",
+        "coerce": false,
+        "description": "Date and time in ISO 8601 format (e.g., '2024-03-20T15:30:00Z')."
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      }
+    },
+    "recipient": {
+      "_def": {
+        "unknownKeys": "strip",
+        "catchall": {
+          "_def": {
+            "typeName": "ZodNever"
+          },
+          "~standard": {
+            "version": 1,
+            "vendor": "zod"
+          }
+        },
+        "typeName": "ZodObject",
+        "description": "Questionnaire recipient details."
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      },
+      "_cached": null
+    },
+    "metadata": {
+      "_def": {
+        "unknownKeys": "strip",
+        "catchall": {
+          "_def": {
+            "typeName": "ZodNever"
+          },
+          "~standard": {
+            "version": 1,
+            "vendor": "zod"
+          }
+        },
+        "typeName": "ZodObject"
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      },
+      "_cached": null
+    },
+    "ipAddress": {
+      "_def": {
+        "checks": [
+          {
+            "kind": "regex",
+            "regex": {},
+            "message": "Invalid IP address format"
+          }
+        ],
+        "typeName": "ZodString",
+        "coerce": false,
+        "description": "IPv4 address (e.g., '192.168.1.1')."
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      }
+    },
+    "pagination": {
+      "_def": {
+        "unknownKeys": "strip",
+        "catchall": {
+          "_def": {
+            "typeName": "ZodNever"
+          },
+          "~standard": {
+            "version": 1,
+            "vendor": "zod"
+          }
+        },
+        "typeName": "ZodObject"
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      },
+      "_cached": null
+    },
+    "timeRange": {
+      "_def": {
+        "unknownKeys": "strip",
+        "catchall": {
+          "_def": {
+            "typeName": "ZodNever"
+          },
+          "~standard": {
+            "version": 1,
+            "vendor": "zod"
+          }
+        },
+        "typeName": "ZodObject"
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      },
+      "_cached": null
+    },
+    "dateRange": {
+      "_def": {
+        "unknownKeys": "strip",
+        "catchall": {
+          "_def": {
+            "typeName": "ZodNever"
+          },
+          "~standard": {
+            "version": 1,
+            "vendor": "zod"
+          }
+        },
+        "typeName": "ZodObject"
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      },
+      "_cached": null
+    },
+    "riskFilters": {
+      "_def": {
+        "unknownKeys": "strip",
+        "catchall": {
+          "_def": {
+            "typeName": "ZodNever"
+          },
+          "~standard": {
+            "version": 1,
+            "vendor": "zod"
+          }
+        },
+        "typeName": "ZodObject"
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      },
+      "_cached": null
+    },
+    "questionnaireStatus": {
+      "_def": {
+        "values": [
+          "active",
+          "completed",
+          "draft"
+        ],
+        "typeName": "ZodEnum",
+        "description": "Questionnaire status. Options: \"active\" (currently in progress), \"completed\" (finished and submitted), \"draft\" (not yet sent)"
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      }
+    },
+    "bulkOperationType": {
+      "_def": {
+        "values": [
+          "start_monitoring",
+          "stop_monitoring",
+          "update_tier",
+          "update_labels"
+        ],
+        "typeName": "ZodEnum",
+        "description": "Type of bulk operation to perform. Options: \"start_monitoring\" (begin monitoring vendors), \"stop_monitoring\" (stop monitoring vendors), \"update_tier\" (change vendor tier levels), \"update_labels\" (modify vendor labels)"
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      }
+    },
+    "questionnaireId": {
+      "_def": {
+        "checks": [
+          {
+            "kind": "min",
+            "value": 1,
+            "message": "Questionnaire ID cannot be empty"
+          }
+        ],
+        "typeName": "ZodString",
+        "coerce": false,
+        "description": "Unique identifier for a questionnaire."
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      }
+    },
+    "vendorId": {
+      "_def": {
+        "checks": [
+          {
+            "kind": "min",
+            "value": 1,
+            "message": "Vendor ID cannot be empty"
+          }
+        ],
+        "typeName": "ZodString",
+        "coerce": false,
+        "description": "Unique identifier for a vendor."
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      }
+    },
+    "email": {
+      "_def": {
+        "checks": [
+          {
+            "kind": "email",
+            "message": "Invalid email format"
+          }
+        ],
+        "typeName": "ZodString",
+        "coerce": false,
+        "description": "Valid email address (e.g., 'user@example.com')."
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      }
+    },
+    "emailArray": {
+      "_def": {
+        "type": {
+          "_def": {
+            "checks": [
+              {
+                "kind": "email"
+              }
+            ],
+            "typeName": "ZodString",
+            "coerce": false
+          },
+          "~standard": {
+            "version": 1,
+            "vendor": "zod"
+          }
+        },
+        "minLength": null,
+        "maxLength": {
+          "value": 5,
+          "message": "Maximum 5 email addresses allowed"
+        },
+        "exactLength": null,
+        "typeName": "ZodArray",
+        "description": "Array of email addresses (max 5)."
+      },
+      "~standard": {
+        "version": 1,
+        "vendor": "zod"
+      }
+    }
+  }
+}

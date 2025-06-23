@@ -1,0 +1,22 @@
+{
+  "name": "upguard-mcp-examples",
+  "version": "1.0.0",
+  "description": "Example clients for the UpGuard CyberRisk MCP Server",
+  "main": "mcp-client-example.js",
+  "scripts": {
+    "demo": "node mcp-client-example.js",
+    "install-deps": "npm install @modelcontextprotocol/sdk"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0"
+  },
+  "keywords": [
+    "upguard",
+    "mcp",
+    "cybersecurity",
+    "risk-assessment",
+    "api-client"
+  ],
+  "author": "UpGuard MCP Server",
+  "license": "MIT"
+} 
