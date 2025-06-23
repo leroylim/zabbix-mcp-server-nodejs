@@ -12,20 +12,11 @@ const scripts = require('./scripts');
 const discovery = require('./discovery');
 const media = require('./media');
 const actions = require('./actions');
-
-// Enhanced Phase 6 modules
-const mapsNew = require('./maps-new');
-const dashboardsNew = require('./dashboards-new');
-const proxiesNew = require('./proxies-new');
-const servicesNew = require('./services-new');
-const configurationNew = require('./configuration-new');
-
-// Legacy compatibility imports
-const { mapsApi } = require('./maps');
-const { dashboardsApi } = require('./dashboards');
-const { proxiesApi } = require('./proxies');
-const { configurationApi } = require('./configuration');
-const { servicesApi } = require('./services');
+const maps = require('./maps');
+const dashboards = require('./dashboards');
+const proxies = require('./proxies');
+const services = require('./services');
+const configuration = require('./configuration');
 
 module.exports = {
     ...client,
@@ -42,18 +33,9 @@ module.exports = {
     ...discovery,
     ...media,
     ...actions,
-    
-    // Enhanced Phase 6 API modules (primary)
-    ...mapsNew,
-    ...dashboardsNew,
-    ...proxiesNew,
-    ...servicesNew,
-    ...configurationNew,
-    
-    // Legacy compatibility APIs (fallback)
-    ...mapsApi,
-    ...dashboardsApi,
-    ...proxiesApi,
-    ...configurationApi,
-    ...servicesApi
+    ...maps,
+    ...dashboards,
+    ...proxies,
+    ...services,
+    ...configuration
 }; 
