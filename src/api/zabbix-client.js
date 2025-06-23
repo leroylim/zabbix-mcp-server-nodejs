@@ -1,7 +1,11 @@
 /**
  * Zabbix API Client using zabbix-utils library
  * 
- * This replaces the custom axios-based client with the professional zabbix-utils library
+ * This is the unified, professional Zabbix API client that supports both:
+ * - API Token authentication (Zabbix 5.4+, recommended)
+ * - Username/Password authentication (traditional)
+ * 
+ * Replaces the legacy axios-based client with professional zabbix-utils library
  * providing better type safety, automatic authentication, and robust error handling.
  */
 
@@ -15,10 +19,11 @@ class ZabbixClient {
         this.isConnected = false;
         this.lastConnectionAttempt = null;
         this.connectionRetryDelay = 5000; // 5 seconds
+        this.authToken = null; // For backward compatibility
     }
 
     /**
-     * Initialize the Zabbix API client
+     * Initialize the Zabbix API client with automatic authentication method detection
      */
     async initialize() {
         if (this.api && this.isConnected) {
@@ -26,19 +31,37 @@ class ZabbixClient {
         }
 
         try {
-            logger.info(`${config.logging.prefix} Initializing Zabbix API client...`);
+            logger.info(`${config.logging.prefix} Initializing Zabbix API client with ${config.api.authMethod} authentication...`);
             
-            this.api = new AsyncZabbixAPI({
+            // Configure client based on authentication method
+            const clientConfig = {
                 url: config.api.url,
-                user: config.api.username,
-                password: config.api.password,
                 validateCerts: !config.api.ignoreSelfSignedCert,
                 timeout: Math.floor(config.api.timeout / 1000), // Convert to seconds
                 skipVersionCheck: false
-            });
+            };
 
-            // Login and verify connection
-            await this.api.login();
+            if (config.api.authMethod === 'token') {
+                // API Token authentication (Zabbix 5.4+)
+                clientConfig.token = config.api.apiToken;
+                logger.info(`${config.logging.prefix} Using API token authentication`);
+            } else if (config.api.authMethod === 'password') {
+                // Username/Password authentication (traditional)
+                clientConfig.user = config.api.username;
+                clientConfig.password = config.api.password;
+                logger.info(`${config.logging.prefix} Using username/password authentication`);
+            } else {
+                throw new Error('No valid authentication credentials provided. Set ZABBIX_API_TOKEN or ZABBIX_PASSWORD environment variable.');
+            }
+
+            this.api = new AsyncZabbixAPI(clientConfig);
+
+            // For username/password auth, login is required
+            if (config.api.authMethod === 'password') {
+                await this.api.login();
+                // Store auth token for backward compatibility
+                this.authToken = this.api.auth;
+            }
             
             // Get API version to verify connection
             const version = await this.api.apiVersion();
@@ -86,9 +109,17 @@ class ZabbixClient {
                 return false;
             }
             
-            const isAuth = await this.api.checkAuth();
-            this.isConnected = isAuth;
-            return isAuth;
+            // For API token auth, check by making a simple API call
+            if (config.api.authMethod === 'token') {
+                await this.api.apiVersion();
+                this.isConnected = true;
+                return true;
+            } else {
+                // For username/password auth, use checkAuth
+                const isAuth = await this.api.checkAuth();
+                this.isConnected = isAuth;
+                return isAuth;
+            }
         } catch (error) {
             logger.warn(`${config.logging.prefix} Connection check failed:`, error.message);
             this.isConnected = false;
@@ -102,7 +133,10 @@ class ZabbixClient {
     async disconnect() {
         if (this.api && this.isConnected) {
             try {
-                await this.api.logout();
+                // Only logout for username/password auth
+                if (config.api.authMethod === 'password') {
+                    await this.api.logout();
+                }
                 logger.info(`${config.logging.prefix} Disconnected from Zabbix API`);
             } catch (error) {
                 logger.warn(`${config.logging.prefix} Error during logout:`, error.message);
@@ -111,6 +145,7 @@ class ZabbixClient {
         
         this.api = null;
         this.isConnected = false;
+        this.authToken = null;
     }
 
     /**
@@ -143,8 +178,8 @@ class ZabbixClient {
         } catch (error) {
             logger.error(`${config.logging.prefix} API call failed: ${method}`, error.message);
             
-            // Check if it's an authentication error and try to reconnect
-            if (error.message && (
+            // Check if it's an authentication error and try to reconnect (only for password auth)
+            if (config.api.authMethod === 'password' && error.message && (
                 error.message.includes('not authorised') ||
                 error.message.includes('Session terminated') ||
                 error.message.includes('Not authorized')
@@ -162,17 +197,68 @@ class ZabbixClient {
             throw error;
         }
     }
+
+    // ===== BACKWARD COMPATIBILITY METHODS =====
+    // These methods provide compatibility with the old client.js interface
+
+    /**
+     * Legacy zabbixRequest function for backward compatibility
+     * @param {string} method - The Zabbix API method
+     * @param {object} params - Parameters for the API call
+     * @param {string} token - Ignored (for compatibility only)
+     */
+    async zabbixRequest(method, params, token = null) {
+        return await this.request(method, params);
+    }
+
+    /**
+     * Legacy ensureLogin function for backward compatibility
+     */
+    async ensureLogin() {
+        await this.getClient();
+        return this.authToken || 'api_token_auth';
+    }
+
+    /**
+     * Legacy login function for backward compatibility
+     */
+    async login() {
+        if (config.api.authMethod === 'token') {
+            // For API token auth, just verify connection
+            await this.getClient();
+            return 'api_token_auth';
+        } else {
+            // For password auth, perform actual login
+            await this.getClient();
+            return this.authToken;
+        }
+    }
+
+    /**
+     * Legacy logout function for backward compatibility
+     */
+    async logout() {
+        await this.disconnect();
+        return true;
+    }
+
+    /**
+     * Legacy getApiVersion function for backward compatibility
+     */
+    async getApiVersion() {
+        return await this.getVersion();
+    }
 }
 
 // Create singleton instance
 const zabbixClient = new ZabbixClient();
 
-// Export both the class and singleton instance
+// Export both the class and singleton instance with full backward compatibility
 module.exports = {
     ZabbixClient,
     zabbixClient,
     
-    // Convenience methods for backward compatibility
+    // Modern interface methods
     async getClient() {
         return await zabbixClient.getClient();
     },
@@ -191,5 +277,43 @@ module.exports = {
     
     async getVersion() {
         return await zabbixClient.getVersion();
+    },
+
+    // ===== BACKWARD COMPATIBILITY EXPORTS =====
+    // These provide drop-in replacement for client.js functions
+
+    /**
+     * Legacy zabbixRequest function (client.js compatibility)
+     */
+    async zabbixRequest(method, params, token = null) {
+        return await zabbixClient.zabbixRequest(method, params, token);
+    },
+
+    /**
+     * Legacy ensureLogin function (client.js compatibility)
+     */
+    async ensureLogin() {
+        return await zabbixClient.ensureLogin();
+    },
+
+    /**
+     * Legacy login function (client.js compatibility)
+     */
+    async login() {
+        return await zabbixClient.login();
+    },
+
+    /**
+     * Legacy logout function (client.js compatibility)
+     */
+    async logout() {
+        return await zabbixClient.logout();
+    },
+
+    /**
+     * Legacy getApiVersion function (client.js compatibility)
+     */
+    async getApiVersion() {
+        return await zabbixClient.getApiVersion();
     }
 }; 

@@ -1,4 +1,4 @@
-const client = require('./client');
+const client = require('./zabbix-client');
 const hosts = require('./hosts');
 const hostgroups = require('./hostgroups');
 const items = require('./items');

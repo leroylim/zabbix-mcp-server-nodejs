@@ -28,11 +28,40 @@ const { logger } = require('./utils/logger');
 // Load environment variables
 dotenv.config();
 
+// Determine authentication method
+function determineAuthMethod() {
+    const hasApiToken = !!process.env.ZABBIX_API_TOKEN;
+    const hasPassword = !!process.env.ZABBIX_PASSWORD;
+    
+    if (hasApiToken && hasPassword) {
+        logger.warn('Both ZABBIX_API_TOKEN and ZABBIX_PASSWORD are set. Using API token (more secure).');
+        return 'token';
+    } else if (hasApiToken) {
+        return 'token';
+    } else if (hasPassword) {
+        return 'password';
+    } else {
+        return 'none';
+    }
+}
+
+const authMethod = determineAuthMethod();
+
 const config = {
     api: {
         url: process.env.ZABBIX_API_URL || 'https://monitoring.sipef.com/api_jsonrpc.php',
+        
+        // Authentication configuration
+        authMethod: authMethod,
+        
+        // API Token authentication (Zabbix 5.4+, recommended)
+        apiToken: process.env.ZABBIX_API_TOKEN,
+        
+        // Username/Password authentication (traditional)
         username: process.env.ZABBIX_USERNAME || 'Admin',
         password: process.env.ZABBIX_PASSWORD,
+        
+        // Connection settings
         timeout: parseInt(process.env.ZABBIX_REQUEST_TIMEOUT, 10) || 120000,
         ignoreSelfSignedCert: process.env.ZABBIX_IGNORE_SELFSIGNED_CERT === 'true' || true
     },
@@ -55,12 +84,16 @@ const config = {
     environment: process.env.NODE_ENV || 'development'
 };
 
-// Validate configuration
-if (!config.api.password) {
-    const warningMsg = 'CRITICAL: ZABBIX_PASSWORD environment variable is not set. API calls will fail.';
+// Validate authentication configuration
+if (config.api.authMethod === 'none') {
+    const warningMsg = 'CRITICAL: No authentication credentials provided. Set either ZABBIX_API_TOKEN or ZABBIX_PASSWORD environment variable.';
     if (process.env.NODE_ENV !== 'test') {
         logger.error(`${config.logging.prefix} ${warningMsg}`);
     }
+} else if (config.api.authMethod === 'token') {
+    logger.info(`${config.logging.prefix} Using API token authentication (Zabbix 5.4+)`);
+} else if (config.api.authMethod === 'password') {
+    logger.info(`${config.logging.prefix} Using username/password authentication`);
 }
 
 // Validate transport mode
@@ -81,8 +114,9 @@ if (!config.api.url) {
     throw error;
 }
 
-if (!config.api.password) {
-    logger.warn('ZABBIX_PASSWORD not found in environment variables');
+// Additional validation warnings
+if (config.api.authMethod === 'none') {
+    logger.warn('No authentication credentials found in environment variables');
 }
 
 if (config.transport.mode === 'http' && !config.transport.http.port) {
