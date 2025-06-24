@@ -10,7 +10,7 @@ function registerTools(server) {
         {},
         async () => {
             try {
-                const version = await api.getApiVersion();
+                const version = await api.getVersion();
                 return { content: [{ type: 'text', text: `Zabbix API Version: ${version}` }] };
             } catch (error) {
                 logger.error('Error getting API version:', error);
@@ -52,4 +52,28 @@ function registerTools(server) {
     );
 }
 
-module.exports = { registerTools }; 
+/**
+ * Tool for authentication and API version checking
+ */
+async function checkApiVersion() {
+    try {
+        logger.info('Checking Zabbix API version...');
+        
+        const version = await api.getVersion();
+        
+        return {
+            success: true,
+            version: version,
+            message: `Connected to Zabbix API version: ${version}`
+        };
+    } catch (error) {
+        logger.error('Failed to check API version:', error.message);
+        return {
+            success: false,
+            error: error.message,
+            message: 'Failed to connect to Zabbix API'
+        };
+    }
+}
+
+module.exports = { registerTools, checkApiVersion }; 

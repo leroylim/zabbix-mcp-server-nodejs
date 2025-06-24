@@ -5,8 +5,8 @@
  * - API Token authentication (Zabbix 5.4+, recommended)
  * - Username/Password authentication (traditional)
  * 
- * Replaces the legacy axios-based client with professional zabbix-utils library
- * providing better type safety, automatic authentication, and robust error handling.
+ * Provides a clean, modern interface using the professional zabbix-utils library
+ * with better type safety, automatic authentication, and robust error handling.
  */
 
 const { AsyncZabbixAPI } = require('zabbix-utils');
@@ -19,7 +19,6 @@ class ZabbixClient {
         this.isConnected = false;
         this.lastConnectionAttempt = null;
         this.connectionRetryDelay = 5000; // 5 seconds
-        this.authToken = null; // For backward compatibility
     }
 
     /**
@@ -59,8 +58,6 @@ class ZabbixClient {
             // For username/password auth, login is required
             if (config.api.authMethod === 'password') {
                 await this.api.login();
-                // Store auth token for backward compatibility
-                this.authToken = this.api.auth;
             }
             
             // Get API version to verify connection
@@ -128,7 +125,7 @@ class ZabbixClient {
     }
 
     /**
-     * Logout and cleanup
+     * Disconnect and cleanup
      */
     async disconnect() {
         if (this.api && this.isConnected) {
@@ -145,7 +142,6 @@ class ZabbixClient {
         
         this.api = null;
         this.isConnected = false;
-        this.authToken = null;
     }
 
     /**
@@ -197,63 +193,12 @@ class ZabbixClient {
             throw error;
         }
     }
-
-    // ===== BACKWARD COMPATIBILITY METHODS =====
-    // These methods provide compatibility with the old client.js interface
-
-    /**
-     * Legacy zabbixRequest function for backward compatibility
-     * @param {string} method - The Zabbix API method
-     * @param {object} params - Parameters for the API call
-     * @param {string} token - Ignored (for compatibility only)
-     */
-    async zabbixRequest(method, params, token = null) {
-        return await this.request(method, params);
-    }
-
-    /**
-     * Legacy ensureLogin function for backward compatibility
-     */
-    async ensureLogin() {
-        await this.getClient();
-        return this.authToken || 'api_token_auth';
-    }
-
-    /**
-     * Legacy login function for backward compatibility
-     */
-    async login() {
-        if (config.api.authMethod === 'token') {
-            // For API token auth, just verify connection
-            await this.getClient();
-            return 'api_token_auth';
-        } else {
-            // For password auth, perform actual login
-            await this.getClient();
-            return this.authToken;
-        }
-    }
-
-    /**
-     * Legacy logout function for backward compatibility
-     */
-    async logout() {
-        await this.disconnect();
-        return true;
-    }
-
-    /**
-     * Legacy getApiVersion function for backward compatibility
-     */
-    async getApiVersion() {
-        return await this.getVersion();
-    }
 }
 
 // Create singleton instance
 const zabbixClient = new ZabbixClient();
 
-// Export both the class and singleton instance with full backward compatibility
+// Export clean, modern interface only
 module.exports = {
     ZabbixClient,
     zabbixClient,
@@ -277,43 +222,5 @@ module.exports = {
     
     async getVersion() {
         return await zabbixClient.getVersion();
-    },
-
-    // ===== BACKWARD COMPATIBILITY EXPORTS =====
-    // These provide drop-in replacement for client.js functions
-
-    /**
-     * Legacy zabbixRequest function (client.js compatibility)
-     */
-    async zabbixRequest(method, params, token = null) {
-        return await zabbixClient.zabbixRequest(method, params, token);
-    },
-
-    /**
-     * Legacy ensureLogin function (client.js compatibility)
-     */
-    async ensureLogin() {
-        return await zabbixClient.ensureLogin();
-    },
-
-    /**
-     * Legacy login function (client.js compatibility)
-     */
-    async login() {
-        return await zabbixClient.login();
-    },
-
-    /**
-     * Legacy logout function (client.js compatibility)
-     */
-    async logout() {
-        return await zabbixClient.logout();
-    },
-
-    /**
-     * Legacy getApiVersion function (client.js compatibility)
-     */
-    async getApiVersion() {
-        return await zabbixClient.getApiVersion();
     }
 }; 

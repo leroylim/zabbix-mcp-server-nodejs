@@ -1,4 +1,4 @@
-const { zabbixRequest } = require('./zabbix-client');
+const { request } = require('./zabbix-client');
 const { logger } = require('../utils/logger');
 
 /**
@@ -8,7 +8,7 @@ const { logger } = require('../utils/logger');
  */
 async function getHistory(options = { itemids: [], history: 0, output: 'extend', limit: 100 }) {
     try {
-        return await zabbixRequest('history.get', options);
+        return await request('history.get', options);
     } catch (error) {
         logger.error('Error getting history:', error);
         throw error;
@@ -22,7 +22,7 @@ async function getHistory(options = { itemids: [], history: 0, output: 'extend',
  */
 async function getTrends(options = { itemids: [], time_from: Math.floor(Date.now() / 1000) - 3600, time_till: Math.floor(Date.now() / 1000), output: 'extend' }) {
     try {
-        return await zabbixRequest('trend.get', options);
+        return await request('trend.get', options);
     } catch (error) {
         logger.error('Error getting trends:', error);
         throw error;
@@ -31,7 +31,7 @@ async function getTrends(options = { itemids: [], time_from: Math.floor(Date.now
 
 async function getLatestData(options = { itemids: [], output: 'extend', limit: 1 }) {
     try {
-        return await zabbixRequest('history.get', { ...options, sortfield: 'clock', sortorder: 'DESC' });
+        return await request('history.get', { ...options, sortfield: 'clock', sortorder: 'DESC' });
     } catch (error) {
         logger.error('Error getting latest data:', error);
         throw error;
