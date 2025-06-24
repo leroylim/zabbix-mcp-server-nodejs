@@ -33,7 +33,7 @@ function registerTools(server) {
                 if (params.search) apiParams.search = params.search;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const valueMaps = await api.mapsApi.getValueMaps(apiParams);
+                const valueMaps = await api.getValueMaps(apiParams);
                 
                 logger.info(`Retrieved ${valueMaps.length} value maps`);
                 return {
@@ -66,7 +66,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.mapsApi.createValueMap(params);
+                const result = await api.createValueMap(params);
                 
                 logger.info(`Created value map: ${params.name} (ID: ${result.valuemapids[0]})`);
                 return {
@@ -101,7 +101,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.mapsApi.updateValueMap(params);
+                const result = await api.updateValueMap(params);
                 
                 logger.info(`Updated value map ID ${params.valuemapid}`);
                 return {
@@ -128,7 +128,7 @@ function registerTools(server) {
             try {
                 const { valuemapids } = args;
                 
-                const result = await api.mapsApi.deleteValueMaps(valuemapids);
+                const result = await api.deleteValueMaps(valuemapids);
                 
                 logger.info(`Deleted ${valuemapids.length} value maps`);
                 return {
@@ -174,7 +174,7 @@ function registerTools(server) {
                 if (params.search) apiParams.search = params.search;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const iconMaps = await api.mapsApi.getIconMaps(apiParams);
+                const iconMaps = await api.getIconMaps(apiParams);
                 
                 logger.info(`Retrieved ${iconMaps.length} icon maps`);
                 return {
@@ -207,7 +207,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.mapsApi.createIconMap(params);
+                const result = await api.createIconMap(params);
                 
                 logger.info(`Created icon map: ${params.name} (ID: ${result.iconmapids[0]})`);
                 return {
@@ -242,7 +242,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.mapsApi.updateIconMap(params);
+                const result = await api.updateIconMap(params);
                 
                 logger.info(`Updated icon map ID ${params.iconmapid}`);
                 return {
@@ -269,7 +269,7 @@ function registerTools(server) {
             try {
                 const { iconmapids } = args;
                 
-                const result = await api.mapsApi.deleteIconMaps(iconmapids);
+                const result = await api.deleteIconMaps(iconmapids);
                 
                 logger.info(`Deleted ${iconmapids.length} icon maps`);
                 return {
@@ -331,7 +331,7 @@ function registerTools(server) {
                 if (params.search) apiParams.search = params.search;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const maps = await api.mapsApi.getMaps(apiParams);
+                const maps = await api.getMaps(apiParams);
                 
                 logger.info(`Retrieved ${maps.length} network maps`);
                 return {
@@ -484,7 +484,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.mapsApi.createMap(params);
+                const result = await api.createMap(params);
                 
                 logger.info(`Created network map: ${params.name} (ID: ${result.sysmapids[0]})`);
                 return {
@@ -525,7 +525,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.mapsApi.updateMap(params);
+                const result = await api.updateMap(params);
                 
                 logger.info(`Updated network map ID ${params.sysmapid}`);
                 return {
@@ -552,7 +552,7 @@ function registerTools(server) {
             try {
                 const { sysmapids } = args;
                 
-                const result = await api.mapsApi.deleteMaps(sysmapids);
+                const result = await api.deleteMaps(sysmapids);
                 
                 logger.info(`Deleted ${sysmapids.length} network maps`);
                 return {

@@ -39,7 +39,7 @@ function registerTools(server) {
                 if (params.search) apiParams.search = params.search;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const templates = await api.templatesApi.get(apiParams);
+                const templates = await api.getTemplates(apiParams);
                 
                 logger.info(`Retrieved ${templates.length} templates`);
                 return {
@@ -71,7 +71,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.templatesApi.create(params);
+                const result = await api.createTemplate(params);
                 
                 logger.info(`Created template: ${params.host} (ID: ${result.templateids[0]})`);
                 return {
@@ -104,7 +104,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.templatesApi.update(params);
+                const result = await api.updateTemplate(params);
                 
                 logger.info(`Updated template ID ${params.templateid}`);
                 return {
@@ -131,7 +131,7 @@ function registerTools(server) {
             try {
                 const { templateids } = args;
                 
-                const result = await api.templatesApi.delete(templateids);
+                const result = await api.deleteTemplates(templateids);
                 
                 logger.info(`Deleted ${templateids.length} templates`);
                 return {
@@ -159,7 +159,7 @@ function registerTools(server) {
             try {
                 const { hostid, templateids } = args;
                 
-                const result = await api.templatesApi.linkToHost(hostid, templateids);
+                const result = await api.linkTemplatesToHost(hostid, templateids);
                 
                 logger.info(`Linked ${templateids.length} templates to host ${hostid}`);
                 return {
@@ -187,7 +187,7 @@ function registerTools(server) {
             try {
                 const { hostid, templateids } = args;
                 
-                const result = await api.templatesApi.unlinkFromHost(hostid, templateids);
+                const result = await api.unlinkTemplatesFromHost(hostid, templateids);
                 
                 logger.info(`Unlinked ${templateids.length} templates from host ${hostid}`);
                 return {

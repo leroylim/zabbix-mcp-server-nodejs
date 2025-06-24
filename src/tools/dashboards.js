@@ -37,7 +37,7 @@ function registerTools(server) {
                 if (params.search) apiParams.search = params.search;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const dashboards = await api.dashboardsApi.get(apiParams);
+                const dashboards = await api.getDashboards(apiParams);
                 
                 logger.info(`Retrieved ${dashboards.length} dashboards`);
                 return {
@@ -103,7 +103,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.dashboardsApi.create(params);
+                const result = await api.createDashboard(params);
                 
                 logger.info(`Created dashboard: ${params.name} (ID: ${result.dashboardids[0]})`);
                 return {
@@ -157,7 +157,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.dashboardsApi.update(params);
+                const result = await api.updateDashboard(params);
                 
                 logger.info(`Updated dashboard ID ${params.dashboardid}`);
                 return {
@@ -184,7 +184,7 @@ function registerTools(server) {
             try {
                 const { dashboardids } = args;
                 
-                const result = await api.dashboardsApi.delete(dashboardids);
+                const result = await api.deleteDashboards(dashboardids);
                 
                 logger.info(`Deleted ${dashboardids.length} dashboards`);
                 return {

@@ -34,7 +34,7 @@ function registerTools(server) {
                 if (params.time_from) apiParams.time_from = params.time_from;
                 if (params.time_till) apiParams.time_till = params.time_till;
 
-                const history = await api.historyApi.getHistory(apiParams);
+                const history = await api.getHistory(apiParams);
                 
                 logger.info(`Retrieved ${history.length} history records`);
                 
@@ -87,7 +87,7 @@ function registerTools(server) {
                 if (params.time_from) apiParams.time_from = params.time_from;
                 if (params.time_till) apiParams.time_till = params.time_till;
 
-                const trends = await api.historyApi.getTrends(apiParams);
+                const trends = await api.getTrends(apiParams);
                 
                 logger.info(`Retrieved ${trends.length} trends records`);
                 
@@ -134,7 +134,7 @@ function registerTools(server) {
                 let itemInfo = null;
                 if (include_item_info) {
                     // Get item information to determine value type
-                    const items = await api.itemsApi.get({
+                    const items = await api.getItems({
                         itemids: [itemid],
                         output: ['itemid', 'name', 'key_', 'value_type', 'units', 'hostid'],
                         selectHosts: ['host', 'name']
@@ -163,7 +163,7 @@ function registerTools(server) {
                     apiParams.history = parseInt(itemInfo.value_type);
                 }
                 
-                const history = await api.historyApi.getHistory(apiParams);
+                const history = await api.getHistory(apiParams);
                 
                 logger.info(`Retrieved ${history.length} history records for item ${itemid}`);
                 

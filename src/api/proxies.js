@@ -30,9 +30,8 @@ const { request } = require('./zabbix-client');
 async function getProxies(options = {}) {
     const defaultOptions = {
         output: 'extend',
-        selectHosts: true,
-        selectInterface: true,
-        sortfield: ['host'],
+        selectHosts: 'extend',
+        sortfield: ['name'],
         sortorder: 'ASC'
     };
     

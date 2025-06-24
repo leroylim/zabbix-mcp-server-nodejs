@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
+const schemas = require('./schemas');
 
 function registerTools(server) {
     // Get media types
@@ -9,13 +10,13 @@ function registerTools(server) {
         'Get media types from Zabbix with filtering and output options',
         {
             mediatypeids: z.array(z.string()).optional().describe('Return only media types with the given IDs'),
-            output: z.array(z.string()).optional().default(['mediatypeid', 'name', 'type', 'status', 'description']).describe('Object properties to be returned'),
-            selectMessageTemplates: z.array(z.string()).optional().describe('Return message templates used by the media type'),
-            selectUsers: z.array(z.string()).optional().describe('Return users that use the media type'),
+            output: schemas.outputFields.optional().default('extend').describe('Object properties to be returned'),
+            selectMessageTemplates: schemas.outputFields.optional().describe('Return message templates used by the media type'),
+            selectUsers: schemas.outputFields.optional().describe('Return users that use the media type'),
             filter: z.record(z.any()).optional().describe('Return only media types that match the given filter'),
             search: z.record(z.any()).optional().describe('Return only media types that match the given wildcard search'),
-            sortfield: z.array(z.string()).optional().default(['name']).describe('Sort the result by the given properties'),
-            sortorder: z.enum(['ASC', 'DESC']).optional().default('ASC').describe('Sort order'),
+            sortfield: z.union([z.string(), z.array(z.string())]).optional().describe('Field(s) to sort by (e.g., "name", ["type", "name"])'),
+            sortorder: schemas.sortOrder.optional().describe('Sort order'),
             limit: z.number().int().positive().optional().describe('Limit the number of records returned')
         },
         async (args) => {
@@ -23,8 +24,8 @@ function registerTools(server) {
                 const params = { ...args };
                 
                 const apiParams = {
-                    output: params.output || ['mediatypeid', 'name', 'type', 'status', 'description'],
-                    sortfield: params.sortfield || ['name'],
+                    output: params.output || 'extend',
+                    sortfield: params.sortfield || 'name',
                     sortorder: params.sortorder || 'ASC'
                 };
 
@@ -35,7 +36,7 @@ function registerTools(server) {
                 if (params.search) apiParams.search = params.search;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const mediaTypes = await api.mediaApi.get(apiParams);
+                const mediaTypes = await api.getMediaTypes(apiParams);
                 
                 logger.info(`Retrieved ${mediaTypes.length} media types`);
                 return {
@@ -110,7 +111,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.mediaApi.create(params);
+                const result = await api.createMediaType(params);
                 
                 logger.info(`Created media type: ${params.name} (ID: ${result.mediatypeids[0]})`);
                 return {
@@ -146,7 +147,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.mediaApi.update(params);
+                const result = await api.updateMediaType(params);
                 
                 logger.info(`Updated media type ID ${params.mediatypeid}`);
                 return {
@@ -173,7 +174,7 @@ function registerTools(server) {
             try {
                 const { mediatypeids } = args;
                 
-                const result = await api.mediaApi.delete(mediatypeids);
+                const result = await api.deleteMediaTypes(mediatypeids);
                 
                 logger.info(`Deleted ${mediatypeids.length} media types`);
                 return {
@@ -207,7 +208,7 @@ function registerTools(server) {
                     message: args.message || 'This is a test message from Zabbix API.'
                 };
                 
-                const result = await api.mediaApi.test(params);
+                const result = await api.testMediaType(params);
                 
                 logger.info(`Tested media type ID ${params.mediatypeid} to ${params.sendto}`);
                 return {
@@ -257,7 +258,7 @@ function registerTools(server) {
                 if (params.filter) apiParams.filter = params.filter;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const userMedia = await api.mediaApi.getUserMedia(apiParams);
+                const userMedia = await api.getUserMedia(apiParams);
                 
                 logger.info(`Retrieved ${userMedia.length} user media configurations`);
                 return {
@@ -321,7 +322,7 @@ function registerTools(server) {
                 if (params.filter) apiParams.filter = params.filter;
                 if (params.search) apiParams.search = params.search;
 
-                const alerts = await api.mediaApi.getAlerts(apiParams);
+                const alerts = await api.getAlerts(apiParams);
                 
                 // Format the results with readable timestamps
                 const formattedAlerts = alerts.map(alert => ({

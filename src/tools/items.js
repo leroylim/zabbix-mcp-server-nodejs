@@ -44,7 +44,7 @@ function registerTools(server) {
                 if (params.limit) apiParams.limit = params.limit;
                 if (params.monitored !== undefined) apiParams.monitored = params.monitored;
 
-                const items = await api.itemsApi.get(apiParams);
+                const items = await api.getItems(apiParams);
                 
                 logger.info(`Retrieved ${items.length} items`);
                 return {
@@ -84,7 +84,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.itemsApi.create(params);
+                const result = await api.createItem(params);
                 
                 logger.info(`Created item: ${params.name} (ID: ${result.itemids[0]})`);
                 return {
@@ -121,7 +121,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.itemsApi.update(params);
+                const result = await api.updateItem(params);
                 
                 logger.info(`Updated item ID ${params.itemid}`);
                 return {
@@ -148,7 +148,7 @@ function registerTools(server) {
             try {
                 const { itemids } = args;
                 
-                const result = await api.itemsApi.delete(itemids);
+                const result = await api.deleteItems(itemids);
                 
                 logger.info(`Deleted ${itemids.length} items`);
                 return {
@@ -190,7 +190,7 @@ function registerTools(server) {
                 if (params.selectHosts) apiParams.selectHosts = params.selectHosts;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const latestData = await api.itemsApi.getLatestData(apiParams);
+                const latestData = await api.getLatestData(apiParams);
                 
                 logger.info(`Retrieved latest data for ${latestData.length} items`);
                 return {

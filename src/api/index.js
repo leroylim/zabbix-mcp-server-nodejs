@@ -17,6 +17,7 @@ const dashboards = require('./dashboards');
 const proxies = require('./proxies');
 const services = require('./services');
 const configuration = require('./configuration');
+const intelligence = require('./intelligence');
 
 module.exports = {
     ...client,
@@ -37,5 +38,6 @@ module.exports = {
     ...dashboards,
     ...proxies,
     ...services,
-    ...configuration
+    ...configuration,
+    ...intelligence
 }; 

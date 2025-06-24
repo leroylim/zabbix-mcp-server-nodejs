@@ -340,6 +340,52 @@ async function getProblemsByTriggers(triggerIds, additionalOptions = {}) {
     }
 }
 
+/**
+ * Get events
+ * @param {Object} options - Parameters for event.get
+ * @returns {Promise<Array>} Array of events
+ */
+async function getEvents(options = {}) {
+    try {
+        logger.debug(`${config.logging.prefix} Getting events`);
+        return await request('event.get', options);
+    } catch (error) {
+        logger.error(`${config.logging.prefix} Failed to get events:`, error.message);
+        throw new Error(`Failed to retrieve events: ${error.message}`);
+    }
+}
+
+/**
+ * Acknowledge event(s)
+ * @param {Array<string>} eventIds - Array of event IDs to acknowledge
+ * @param {string} message - Acknowledgment message
+ * @param {Object} actionOptions - Action options (action, severity, suppress_until)
+ * @returns {Promise<Object>} Acknowledgment result
+ */
+async function acknowledgeEvent(eventIds, message = "Acknowledged via MCP", actionOptions = {}) {
+    if (!Array.isArray(eventIds) || eventIds.length === 0) {
+        throw new Error("acknowledgeEvent expects a non-empty array of event IDs.");
+    }
+
+    try {
+        logger.info(`${config.logging.prefix} Acknowledging events: ${eventIds.join(', ')}`);
+        
+        const params = {
+            eventids: eventIds,
+            message: message,
+            action: actionOptions.action || 6, // Default: acknowledge + add message
+            ...actionOptions
+        };
+        
+        const result = await request('event.acknowledge', params);
+        logger.info(`${config.logging.prefix} Successfully acknowledged ${eventIds.length} events`);
+        return result;
+    } catch (error) {
+        logger.error(`${config.logging.prefix} Failed to acknowledge events:`, error.message);
+        throw new Error(`Failed to acknowledge events: ${error.message}`);
+    }
+}
+
 module.exports = {
     getProblems,
     getActiveProblems,
@@ -351,5 +397,7 @@ module.exports = {
     getProblemStatistics,
     getProblemsWithTags,
     getProblemCount,
-    getProblemsByTriggers
+    getProblemsByTriggers,
+    getEvents,
+    acknowledgeEvent
 }; 

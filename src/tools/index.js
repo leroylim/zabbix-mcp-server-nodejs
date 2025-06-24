@@ -1,4 +1,4 @@
-const { logger } = require('../utils/logger');
+﻿const { logger } = require('../utils/logger');
 const authTools = require('./auth');
 const hostTools = require('./hosts');
 const problemTools = require('./problems');
@@ -17,7 +17,7 @@ const mapTools = require('./maps');
 const dashboardTools = require('./dashboards');
 const proxyTools = require('./proxies');
 const configurationTools = require('./configuration');
-const serviceTools = require('./services');`nconst intelligenceTools = require('./intelligence');
+const serviceTools = require('./services');
 const intelligenceTools = require('./intelligence');
 // Import other tool categories as they are created
 

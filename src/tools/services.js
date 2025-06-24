@@ -47,7 +47,7 @@ function registerTools(server) {
                 if (params.search) apiParams.search = params.search;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const services = await api.servicesApi.get(apiParams);
+                const services = await api.getServices(apiParams);
                 
                 logger.info(`Retrieved ${services.length} services`);
                 return {
@@ -111,7 +111,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.servicesApi.create(params);
+                const result = await api.createService(params);
                 
                 logger.info(`Created service: ${params.name} (ID: ${result.serviceids[0]})`);
                 return {
@@ -166,7 +166,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.servicesApi.update(params);
+                const result = await api.updateService(params);
                 
                 logger.info(`Updated service ID ${params.serviceid}`);
                 return {
@@ -193,7 +193,7 @@ function registerTools(server) {
             try {
                 const { serviceids } = args;
                 
-                const result = await api.servicesApi.delete(serviceids);
+                const result = await api.deleteServices(serviceids);
                 
                 logger.info(`Deleted ${serviceids.length} services`);
                 return {
@@ -224,7 +224,7 @@ function registerTools(server) {
             try {
                 const { serviceids, intervals } = args;
                 
-                const slaData = await api.servicesApi.getSLA(serviceids, intervals);
+                const slaData = await api.getServiceSLA(serviceids, intervals);
                 
                 logger.info(`Retrieved SLA data for ${serviceids.length} services`);
                 return {

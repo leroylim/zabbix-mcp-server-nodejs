@@ -35,7 +35,7 @@ function registerTools(server) {
                 if (params.search) apiParams.search = params.search;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const proxies = await api.proxiesApi.get(apiParams);
+                const proxies = await api.getProxies(apiParams);
                 
                 logger.info(`Retrieved ${proxies.length} proxies`);
                 return {
@@ -88,7 +88,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.proxiesApi.create(params);
+                const result = await api.createProxy(params);
                 
                 logger.info(`Created proxy: ${params.name} (ID: ${result.proxyids[0]})`);
                 return {
@@ -142,7 +142,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.proxiesApi.update(params);
+                const result = await api.updateProxy(params);
                 
                 logger.info(`Updated proxy ID ${params.proxyid}`);
                 return {
@@ -169,7 +169,7 @@ function registerTools(server) {
             try {
                 const { proxyids } = args;
                 
-                const result = await api.proxiesApi.delete(proxyids);
+                const result = await api.deleteProxies(proxyids);
                 
                 logger.info(`Deleted ${proxyids.length} proxies`);
                 return {

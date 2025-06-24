@@ -31,9 +31,9 @@ const { request } = require('./zabbix-client');
 async function getDashboards(options = {}) {
     const defaultOptions = {
         output: 'extend',
-        selectPages: true,
-        selectUsers: true,
-        selectUserGroups: true,
+        selectPages: 'extend',
+        selectUsers: 'extend',
+        selectUserGroups: 'extend',
         sortfield: ['name'],
         sortorder: 'ASC'
     };

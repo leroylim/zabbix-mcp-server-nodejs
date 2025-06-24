@@ -39,7 +39,7 @@ function registerTools(server) {
                 if (params.search) apiParams.search = params.search;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const scripts = await api.scriptsApi.get(apiParams);
+                const scripts = await api.getScripts(apiParams);
                 
                 logger.info(`Retrieved ${scripts.length} scripts`);
                 return {
@@ -85,7 +85,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.scriptsApi.create(params);
+                const result = await api.createScript(params);
                 
                 logger.info(`Created script: ${params.name} (ID: ${result.scriptids[0]})`);
                 return {
@@ -122,7 +122,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.scriptsApi.update(params);
+                const result = await api.updateScript(params);
                 
                 logger.info(`Updated script ID ${params.scriptid}`);
                 return {
@@ -149,7 +149,7 @@ function registerTools(server) {
             try {
                 const { scriptids } = args;
                 
-                const result = await api.scriptsApi.delete(scriptids);
+                const result = await api.deleteScripts(scriptids);
                 
                 logger.info(`Deleted ${scriptids.length} scripts`);
                 return {
@@ -179,7 +179,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.scriptsApi.execute(params);
+                const result = await api.executeScript(params);
                 
                 logger.info(`Executed script ID ${params.scriptid} on host ${params.hostid || 'N/A'}`);
                 
@@ -234,7 +234,7 @@ function registerTools(server) {
                 if (params.time_from) apiParams.time_from = params.time_from;
                 if (params.time_till) apiParams.time_till = params.time_till;
 
-                const events = await api.problemsApi.getEvents(apiParams);
+                const events = await api.getEvents(apiParams);
                 
                 // Format the results with readable timestamps
                 const formattedEvents = events.map(event => ({

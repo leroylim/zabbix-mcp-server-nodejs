@@ -51,7 +51,7 @@ function registerTools(server) {
                 if (params.search) apiParams.search = params.search;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const actions = await api.actionsApi.get(apiParams);
+                const actions = await api.getActions(apiParams);
                 
                 logger.info(`Retrieved ${actions.length} actions`);
                 return {
@@ -195,7 +195,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.actionsApi.create(params);
+                const result = await api.createAction(params);
                 
                 logger.info(`Created action: ${params.name} (ID: ${result.actionids[0]})`);
                 return {
@@ -232,7 +232,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.actionsApi.update(params);
+                const result = await api.updateAction(params);
                 
                 logger.info(`Updated action ID ${params.actionid}`);
                 return {
@@ -259,7 +259,7 @@ function registerTools(server) {
             try {
                 const { actionids } = args;
                 
-                const result = await api.actionsApi.delete(actionids);
+                const result = await api.deleteActions(actionids);
                 
                 logger.info(`Deleted ${actionids.length} actions`);
                 return {
@@ -307,7 +307,7 @@ function registerTools(server) {
                 if (params.search) apiParams.search = params.search;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const correlations = await api.actionsApi.getCorrelations(apiParams);
+                const correlations = await api.getCorrelations(apiParams);
                 
                 logger.info(`Retrieved ${correlations.length} correlations`);
                 return {
@@ -355,7 +355,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.actionsApi.createCorrelation(params);
+                const result = await api.createCorrelation(params);
                 
                 logger.info(`Created correlation: ${params.name} (ID: ${result.correlationids[0]})`);
                 return {
@@ -382,7 +382,7 @@ function registerTools(server) {
             try {
                 const { correlationids } = args;
                 
-                const result = await api.actionsApi.deleteCorrelations(correlationids);
+                const result = await api.deleteCorrelations(correlationids);
                 
                 logger.info(`Deleted ${correlationids.length} correlations`);
                 return {

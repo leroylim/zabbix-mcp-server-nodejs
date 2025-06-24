@@ -34,7 +34,7 @@ function registerTools(server) {
                 if (params.selectTemplates) apiParams.selectTemplates = params.selectTemplates;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const hostGroups = await api.hostGroupsApi.get(apiParams);
+                const hostGroups = await api.getHostGroups(apiParams);
                 
                 logger.info(`Retrieved ${hostGroups.length} host groups`);
                 return {
@@ -61,7 +61,7 @@ function registerTools(server) {
             try {
                 const { name } = args;
                 
-                const result = await api.hostGroupsApi.create({ name });
+                const result = await api.createHostGroup({ name });
                 
                 logger.info(`Created host group: ${name} (ID: ${result.groupids[0]})`);
                 return {
@@ -89,7 +89,7 @@ function registerTools(server) {
             try {
                 const { groupid, name } = args;
                 
-                const result = await api.hostGroupsApi.update({ groupid, name });
+                const result = await api.updateHostGroup({ groupid, name });
                 
                 logger.info(`Updated host group ID ${groupid} with new name: ${name}`);
                 return {
@@ -116,7 +116,7 @@ function registerTools(server) {
             try {
                 const { groupids } = args;
                 
-                const result = await api.hostGroupsApi.delete(groupids);
+                const result = await api.deleteHostGroups(groupids);
                 
                 logger.info(`Deleted ${groupids.length} host groups`);
                 return {

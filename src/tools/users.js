@@ -39,7 +39,7 @@ function registerTools(server) {
                 if (params.search) apiParams.search = params.search;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const users = await api.usersApi.get(apiParams);
+                const users = await api.getUsers(apiParams);
                 
                 logger.info(`Retrieved ${users.length} users`);
                 return {
@@ -87,7 +87,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.usersApi.create(params);
+                const result = await api.createUser(params);
                 
                 logger.info(`Created user: ${params.username} (ID: ${result.userids[0]})`);
                 return {
@@ -126,7 +126,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.usersApi.update(params);
+                const result = await api.updateUser(params);
                 
                 logger.info(`Updated user ID ${params.userid}`);
                 return {
@@ -153,7 +153,7 @@ function registerTools(server) {
             try {
                 const { userids } = args;
                 
-                const result = await api.usersApi.delete(userids);
+                const result = await api.deleteUsers(userids);
                 
                 logger.info(`Deleted ${userids.length} users`);
                 return {
@@ -203,7 +203,7 @@ function registerTools(server) {
                 if (params.search) apiParams.search = params.search;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const userGroups = await api.usersApi.getUserGroups(apiParams);
+                const userGroups = await api.getUserGroups(apiParams);
                 
                 logger.info(`Retrieved ${userGroups.length} user groups`);
                 return {
@@ -237,7 +237,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.usersApi.createUserGroup(params);
+                const result = await api.createUserGroup(params);
                 
                 logger.info(`Created user group: ${params.name} (ID: ${result.usrgrpids[0]})`);
                 return {

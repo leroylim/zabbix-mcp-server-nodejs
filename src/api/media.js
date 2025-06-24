@@ -1,19 +1,7 @@
+const { request } = require('./zabbix-client');
 const { logger } = require('../utils/logger');
-const { ZabbixClient } = require('./zabbix-client');
 const config = require('../config');
-
-// Initialize client
-const client = new ZabbixClient();
-
-/**
- * Make a request using the zabbix-utils client
- * @param {string} method - API method name
- * @param {Object} params - Request parameters
- * @returns {Promise<any>} API response
- */
-async function request(method, params = {}) {
-    return await client.request(method, params);
-}
+const legacyClient = require('../../zabbixApiClient');
 
 /**
  * Get media types from Zabbix
@@ -21,20 +9,14 @@ async function request(method, params = {}) {
  * @returns {Promise<Array>} Array of media types
  */
 async function getMediaTypes(options = {}) {
-    try {
-        logger.debug(`${config.logging.prefix} Getting media types`);
-        const defaultOptions = {
-            output: 'extend',
-            selectUsers: ['userid', 'username'],
-            selectMessageTemplates: 'extend'
-        };
-        
-        const params = { ...defaultOptions, ...options };
-        return await request('mediatype.get', params);
-    } catch (error) {
-        logger.error(`${config.logging.prefix} Failed to get media types:`, error.message);
-        throw new Error(`Failed to retrieve media types: ${error.message}`);
-    }
+    // Set default output if not provided, just like legacy client
+    const params = {
+        output: 'extend',
+        ...options
+    };
+    
+    // Pass parameters directly to Zabbix API, exactly like legacy client
+    return await request('mediatype.get', params);
 }
 
 /**
@@ -328,7 +310,7 @@ async function getAlerts(options = {}) {
             output: 'extend',
             selectHosts: ['hostid', 'name'],
             selectUsers: ['userid', 'username'],
-            selectMediaType: ['mediatypeid', 'name', 'type'],
+            selectMediatypes: ['mediatypeid', 'name', 'type'],
             sortfield: ['clock'],
             sortorder: 'DESC',
             limit: 100
@@ -373,7 +355,7 @@ async function getAlertsByTimeRange(timeFrom, timeTill, options = {}) {
             output: 'extend',
             selectHosts: ['hostid', 'name'],
             selectUsers: ['userid', 'username'],
-            selectMediaType: ['mediatypeid', 'name', 'type'],
+            selectMediatypes: ['mediatypeid', 'name', 'type'],
             sortfield: ['clock'],
             sortorder: 'DESC',
             ...options
@@ -405,7 +387,7 @@ async function getAlertsByStatus(status, options = {}) {
             output: 'extend',
             selectHosts: ['hostid', 'name'],
             selectUsers: ['userid', 'username'],
-            selectMediaType: ['mediatypeid', 'name', 'type'],
+            selectMediatypes: ['mediatypeid', 'name', 'type'],
             sortfield: ['clock'],
             sortorder: 'DESC',
             ...options

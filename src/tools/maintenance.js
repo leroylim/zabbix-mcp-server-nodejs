@@ -41,7 +41,7 @@ function registerTools(server) {
                 if (params.search) apiParams.search = params.search;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const maintenance = await api.maintenanceApi.get(apiParams);
+                const maintenance = await api.getMaintenanceWindows(apiParams);
                 
                 logger.info(`Retrieved ${maintenance.length} maintenance periods`);
                 return {
@@ -94,7 +94,7 @@ function registerTools(server) {
                     throw new Error('Either hostids or groupids must be specified for maintenance');
                 }
 
-                const result = await api.maintenanceApi.create(params);
+                const result = await api.createMaintenanceWindow(params);
                 
                 logger.info(`Created maintenance period: ${params.name} (ID: ${result.maintenanceids[0]})`);
                 return {
@@ -128,7 +128,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.maintenanceApi.update(params);
+                const result = await api.updateMaintenanceWindow(params);
                 
                 logger.info(`Updated maintenance period ID ${params.maintenanceid}`);
                 return {
@@ -155,7 +155,7 @@ function registerTools(server) {
             try {
                 const { maintenanceids } = args;
                 
-                const result = await api.maintenanceApi.delete(maintenanceids);
+                const result = await api.deleteMaintenanceWindows(maintenanceids);
                 
                 logger.info(`Deleted ${maintenanceids.length} maintenance periods`);
                 return {

@@ -47,7 +47,7 @@ function registerTools(server) {
                 if (params.search) apiParams.search = params.search;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const rules = await api.discoveryApi.get(apiParams);
+                const rules = await api.getDiscoveryRules(apiParams);
                 
                 logger.info(`Retrieved ${rules.length} discovery rules`);
                 return {
@@ -101,7 +101,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.discoveryApi.create(params);
+                const result = await api.createDiscoveryRule(params);
                 
                 logger.info(`Created discovery rule: ${params.name} (ID: ${result.itemids[0]})`);
                 return {
@@ -136,7 +136,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.discoveryApi.update(params);
+                const result = await api.updateDiscoveryRule(params);
                 
                 logger.info(`Updated discovery rule ID ${params.itemid}`);
                 return {
@@ -163,7 +163,7 @@ function registerTools(server) {
             try {
                 const { itemids } = args;
                 
-                const result = await api.discoveryApi.delete(itemids);
+                const result = await api.deleteDiscoveryRules(itemids);
                 
                 logger.info(`Deleted ${itemids.length} discovery rules`);
                 return {
@@ -213,7 +213,7 @@ function registerTools(server) {
                 if (params.search) apiParams.search = params.search;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const hosts = await api.discoveryApi.getDiscoveredHosts(apiParams);
+                const hosts = await api.getDiscoveredHosts(apiParams);
                 
                 // Format timestamps for readability
                 const formattedHosts = hosts.map(host => ({
@@ -272,7 +272,7 @@ function registerTools(server) {
                 if (params.search) apiParams.search = params.search;
                 if (params.limit) apiParams.limit = params.limit;
 
-                const services = await api.discoveryApi.getDiscoveredServices(apiParams);
+                const services = await api.getDiscoveredServices(apiParams);
                 
                 logger.info(`Retrieved ${services.length} discovered services`);
                 return {

@@ -31,11 +31,11 @@ const { request } = require('./zabbix-client');
 async function getServices(options = {}) {
     const defaultOptions = {
         output: 'extend',
-        selectParents: true,
-        selectChildren: true,
-        selectProblemTags: true,
-        selectStatusRules: true,
-        selectTags: true,
+        selectParents: 'extend',
+        selectChildren: 'extend',
+        selectProblemTags: 'extend',
+        selectStatusRules: 'extend',
+        selectTags: 'extend',
         sortfield: ['name'],
         sortorder: 'ASC'
     };

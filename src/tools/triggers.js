@@ -49,7 +49,7 @@ function registerTools(server) {
                 if (params.only_true !== undefined) apiParams.only_true = params.only_true;
                 if (params.min_severity !== undefined) apiParams.min_severity = params.min_severity;
 
-                const triggers = await api.triggersApi.get(apiParams);
+                const triggers = await api.getTriggers(apiParams);
                 
                 logger.info(`Retrieved ${triggers.length} triggers`);
                 return {
@@ -81,7 +81,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.triggersApi.create(params);
+                const result = await api.createTrigger(params);
                 
                 logger.info(`Created trigger: ${params.description} (ID: ${result.triggerids[0]})`);
                 return {
@@ -114,7 +114,7 @@ function registerTools(server) {
             try {
                 const params = { ...args };
                 
-                const result = await api.triggersApi.update(params);
+                const result = await api.updateTrigger(params);
                 
                 logger.info(`Updated trigger ID ${params.triggerid}`);
                 return {
@@ -141,7 +141,7 @@ function registerTools(server) {
             try {
                 const { triggerids } = args;
                 
-                const result = await api.triggersApi.delete(triggerids);
+                const result = await api.deleteTriggers(triggerids);
                 
                 logger.info(`Deleted ${triggerids.length} triggers`);
                 return {

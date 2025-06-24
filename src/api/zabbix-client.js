@@ -29,6 +29,8 @@ class ZabbixClient {
             return this.api;
         }
 
+
+
         try {
             logger.info(`${config.logging.prefix} Initializing Zabbix API client with ${config.api.authMethod} authentication...`);
             
@@ -36,8 +38,8 @@ class ZabbixClient {
             const clientConfig = {
                 url: config.api.url,
                 validateCerts: !config.api.ignoreSelfSignedCert,
-                timeout: Math.floor(config.api.timeout / 1000), // Convert to seconds
-                skipVersionCheck: false
+                timeout: Math.floor(config.api.timeout / 1000), // Library expects seconds, will convert to ms internally
+                skipVersionCheck: true
             };
 
             if (config.api.authMethod === 'token') {
@@ -46,18 +48,25 @@ class ZabbixClient {
                 logger.info(`${config.logging.prefix} Using API token authentication`);
             } else if (config.api.authMethod === 'password') {
                 // Username/Password authentication (traditional)
+                // Note: zabbix-utils library expects 'user' and 'password' properties
                 clientConfig.user = config.api.username;
                 clientConfig.password = config.api.password;
                 logger.info(`${config.logging.prefix} Using username/password authentication`);
+                logger.debug(`${config.logging.prefix} Debug - config.api.username: ${config.api.username ? 'SET' : 'UNDEFINED'}, config.api.password: ${config.api.password ? 'SET' : 'UNDEFINED'}`);
+                logger.debug(`${config.logging.prefix} Debug - clientConfig.user: ${clientConfig.user ? 'SET' : 'UNDEFINED'}, clientConfig.password: ${clientConfig.password ? 'SET' : 'UNDEFINED'}`);
+                
+
             } else {
                 throw new Error('No valid authentication credentials provided. Set ZABBIX_API_TOKEN or ZABBIX_PASSWORD environment variable.');
             }
 
+
+            
             this.api = new AsyncZabbixAPI(clientConfig);
 
             // For username/password auth, login is required
             if (config.api.authMethod === 'password') {
-                await this.api.login();
+                await this.api.login(null, config.api.username, config.api.password);
             }
             
             // Get API version to verify connection

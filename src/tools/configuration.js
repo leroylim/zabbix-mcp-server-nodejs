@@ -38,7 +38,7 @@ function registerTools(server) {
                     options
                 };
 
-                const exportedConfig = await api.configurationApi.exportConfiguration(params);
+                const exportedConfig = await api.exportConfiguration(params);
                 
                 logger.info(`Exported configuration in ${format} format`);
                 return {
@@ -153,7 +153,7 @@ function registerTools(server) {
                     rules
                 };
 
-                const result = await api.configurationApi.importConfiguration(params);
+                const result = await api.importConfiguration(params);
                 
                 logger.info(`Imported configuration from ${format} format`);
                 return {
@@ -245,7 +245,7 @@ function registerTools(server) {
                     rules
                 };
 
-                const result = await api.configurationApi.importCompare(params);
+                const result = await api.importCompare(params);
                 
                 logger.info(`Compared configuration from ${format} format`);
                 return {
