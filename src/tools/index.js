@@ -17,7 +17,8 @@ const mapTools = require('./maps');
 const dashboardTools = require('./dashboards');
 const proxyTools = require('./proxies');
 const configurationTools = require('./configuration');
-const serviceTools = require('./services');
+const serviceTools = require('./services');`nconst intelligenceTools = require('./intelligence');
+const intelligenceTools = require('./intelligence');
 // Import other tool categories as they are created
 
 function registerAllTools(server) {
@@ -40,7 +41,8 @@ function registerAllTools(server) {
         { name: 'dashboards', module: dashboardTools },
         { name: 'proxies', module: proxyTools },
         { name: 'configuration', module: configurationTools },
-        { name: 'services', module: serviceTools }
+        { name: 'services', module: serviceTools },
+        { name: 'intelligence', module: intelligenceTools }
     ];
     
     for (const { name, module } of toolCategories) {
