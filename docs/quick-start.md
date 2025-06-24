@@ -1,33 +1,48 @@
-# UpGuard CyberRisk MCP Server - Quickstart Guide
+# Zabbix MCP Server - Quick Start Guide
 
 ## Overview
 
-The UpGuard CyberRisk MCP Server provides seamless integration with the UpGuard CyberRisk API through the Model Context Protocol (MCP). This guide will get you up and running in minutes.
+The Zabbix MCP Server provides seamless integration with Zabbix monitoring systems through the Model Context Protocol (MCP). This guide will get you up and running in minutes with **modern authentication** and a **clean interface**.
 
 ## Prerequisites
 
-- **Node.js**: Version 16 or higher
-- **UpGuard Account**: Active UpGuard CyberRisk subscription
-- **API Credentials**: UpGuard API key and secret
+- **Node.js**: Version 18 or higher
+- **Zabbix Server**: Version 5.0+ (API Token requires 5.4+)
+- **API Credentials**: Either API token (recommended) or username/password
 
 ## 🚀 Quick Setup
 
 ### 1. Clone and Install
 
 ```bash
-git clone https://github.com/leroylim/upguard-cyberrisk-mcp-server-nodejs.git
-cd upguard-cyberrisk-mcp-server-nodejs
+git clone <repository-url>
+cd zabbix-mcp-server
 npm install
 ```
 
-### 2. Configure Environment
+### 2. Configure Authentication
 
-Create a `.env` file in the root directory:
+#### **Option 1: API Token (Recommended)**
 
+**Generate API Token in Zabbix:**
+1. Login to Zabbix UI
+2. Navigate to `Administration → General → Tokens`
+3. Click `Create token`
+4. Configure token settings and copy the generated token
+
+**Create `.env` file:**
 ```env
-UPGUARD_API_KEY=your_api_key_here
-UPGUARD_API_SECRET=your_api_secret_here
-UPGUARD_BASE_URL=https://cyber-risk.upguard.com/api/public
+ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php
+ZABBIX_API_TOKEN=your_api_token_here
+```
+
+#### **Option 2: Username/Password**
+
+**Create `.env` file:**
+```env
+ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php
+ZABBIX_USERNAME=Admin
+ZABBIX_PASSWORD=your_password
 ```
 
 ### 3. Test the Server
@@ -37,16 +52,12 @@ UPGUARD_BASE_URL=https://cyber-risk.upguard.com/api/public
 node src/index.js
 
 # You should see:
-# [INFO] Starting MCP server with stdio transport
-# [MCP Server Log] UpGuard CyberRisk MCP Server (v1.2.0) STDIO transport is running...
-# [INFO] STDIO server started
+# [INFO] [Zabbix API Client] Using API token authentication (Zabbix 5.4+)
+# [INFO] [Zabbix API Client] Connected to Zabbix API version: 6.0.0
+# [INFO] MCP Server started successfully
 ```
 
-Press `Ctrl+C` to stop the server gracefully. You should see:
-```
-[MCP Server Log] Received SIGINT, shutting down gracefully...
-[MCP Server Log] UpGuard CyberRisk MCP Server stopped
-```
+Press `Ctrl+C` to stop the server gracefully.
 
 ## 🔧 MCP Client Integration
 
@@ -60,16 +71,33 @@ Add the server to your Claude Desktop configuration file:
 **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 **Linux**: `~/.config/Claude/claude_desktop_config.json`
 
+**For API Token Authentication:**
 ```json
 {
   "mcpServers": {
-    "upguard-cyberrisk": {
+    "zabbix": {
       "command": "node",
-      "args": ["C:/path/to/upguard-cyberrisk-mcp-server-nodejs/src/index.js"],
+      "args": ["C:/path/to/zabbix-mcp-server/src/index.js"],
       "env": {
-        "UPGUARD_API_KEY": "your_api_key_here",
-        "UPGUARD_API_SECRET": "your_api_secret_here",
-        "UPGUARD_BASE_URL": "https://cyber-risk.upguard.com/api/public"
+        "ZABBIX_API_URL": "https://your-zabbix-server/api_jsonrpc.php",
+        "ZABBIX_API_TOKEN": "your_api_token_here"
+      }
+    }
+  }
+}
+```
+
+**For Username/Password Authentication:**
+```json
+{
+  "mcpServers": {
+    "zabbix": {
+      "command": "node",
+      "args": ["C:/path/to/zabbix-mcp-server/src/index.js"],
+      "env": {
+        "ZABBIX_API_URL": "https://your-zabbix-server/api_jsonrpc.php",
+        "ZABBIX_USERNAME": "Admin",
+        "ZABBIX_PASSWORD": "your_password"
       }
     }
   }
@@ -78,17 +106,18 @@ Add the server to your Claude Desktop configuration file:
 
 #### Step 2: Restart Claude Desktop
 
-Close and reopen Claude Desktop. You should see the UpGuard tools available in the interface.
+Close and reopen Claude Desktop. You should see the Zabbix tools available in the interface.
 
 #### Step 3: Test Integration
 
 Try these example prompts in Claude Desktop:
 
 ```
-"Get the security risks for microsoft.com"
-"Show me all monitored vendors"
-"List domains in my account"
-"Get vulnerability information for google.com"
+"Show me all hosts in my Zabbix server"
+"Get current problems with high severity"
+"List all host groups"
+"Show me CPU utilization items for host 'web-server-01'"
+"Create a maintenance window for server maintenance"
 ```
 
 ### Option 2: Programmatic MCP Client
@@ -105,19 +134,24 @@ npm install @modelcontextprotocol/sdk
 const { Client } = require('@modelcontextprotocol/sdk/client/index.js');
 const { StdioClientTransport } = require('@modelcontextprotocol/sdk/client/stdio.js');
 
-async function createUpGuardClient() {
+async function createZabbixClient() {
     const transport = new StdioClientTransport({
         command: 'node',
         args: ['src/index.js'],
         env: {
-            UPGUARD_API_KEY: 'your_api_key_here',
-            UPGUARD_API_SECRET: 'your_api_secret_here',
-            UPGUARD_BASE_URL: 'https://cyber-risk.upguard.com/api/public'
+            // API Token Authentication (Recommended)
+            ZABBIX_API_URL: 'https://your-zabbix-server/api_jsonrpc.php',
+            ZABBIX_API_TOKEN: 'your_api_token_here'
+            
+            // Or Username/Password Authentication
+            // ZABBIX_API_URL: 'https://your-zabbix-server/api_jsonrpc.php',
+            // ZABBIX_USERNAME: 'Admin',
+            // ZABBIX_PASSWORD: 'your_password'
         }
     });
 
     const client = new Client({
-        name: "upguard-client",
+        name: "zabbix-client",
         version: "1.0.0"
     }, {
         capabilities: {}
@@ -129,17 +163,24 @@ async function createUpGuardClient() {
 
 // Example usage
 async function main() {
-    const client = await createUpGuardClient();
+    const client = await createZabbixClient();
     
     // List available tools
     const tools = await client.listTools();
-    console.log('Available tools:', tools.tools.map(t => t.name));
+    console.log('Available tools:', tools.tools.length);
+    console.log('Sample tools:', tools.tools.slice(0, 5).map(t => t.name));
     
-    // Get vendor risks
-    const risks = await client.callTool('upguard_get_vendor_risks', {
-        primary_hostname: 'microsoft.com'
+    // Get API information
+    const apiInfo = await client.callTool('zabbix_get_api_info', {});
+    console.log('Zabbix API Info:', apiInfo.content[0].text);
+    
+    // Get hosts
+    const hosts = await client.callTool('zabbix_get_hosts', {
+        output: ['hostid', 'host', 'name'],
+        selectInterfaces: ['interfaceid', 'ip'],
+        limit: 10
     });
-    console.log('Microsoft risks:', risks.content[0].text);
+    console.log('Hosts:', hosts.content[0].text);
     
     await client.close();
 }
@@ -149,197 +190,183 @@ main().catch(console.error);
 
 ## 📋 Essential Tools Reference
 
-### Risk Assessment
+### Authentication & Core
 ```javascript
-// Get vendor security risks
-await client.callTool('upguard_get_vendor_risks', {
-    primary_hostname: 'example.com'
+// Get API information (automatic authentication)
+await client.callTool('zabbix_get_api_info', {});
+
+// Authentication is automatic based on environment variables
+// No manual login/logout required with API tokens
+```
+
+### Host Management
+```javascript
+// Get all hosts
+await client.callTool('zabbix_get_hosts', {
+    output: ['hostid', 'host', 'name', 'status'],
+    selectGroups: ['groupid', 'name'],
+    selectInterfaces: ['interfaceid', 'ip', 'port']
 });
 
-// Compare risks between vendors
-await client.callTool('upguard_get_vendor_risks_diff', {
-    vendor_primary_hostname: 'vendor1.com',
-    comparison_hostname: 'vendor2.com'
+// Create new host
+await client.callTool('zabbix_create_host', {
+    host: 'web-server-01',
+    name: 'Web Server 01',
+    groups: [{ groupid: '2' }],
+    interfaces: [{
+        type: 1,
+        main: 1,
+        useip: 1,
+        ip: '192.168.1.100',
+        port: '10050'
+    }]
 });
 ```
 
-### Vendor Management
+### Problem Monitoring
 ```javascript
-// List all monitored vendors
-await client.callTool('upguard_list_monitored_vendors', {
-    page_size: 100,
-    include_risks: true
+// Get current problems
+await client.callTool('zabbix_get_problems', {
+    severities: [3, 4, 5], // Average, High, Disaster
+    recent: true,
+    selectTags: 'extend',
+    limit: 50
 });
 
-// Get vendor details
-await client.callTool('upguard_get_vendor_details', {
-    hostname: 'vendor.com'
+// Acknowledge problems
+await client.callTool('zabbix_acknowledge_problems', {
+    eventids: ['12345'],
+    message: 'Investigating the issue',
+    action: 6
 });
 ```
 
-### Domain & IP Monitoring
+### Items & Triggers
 ```javascript
-// List domains
-await client.callTool('upguard_list_domains', {
-    page_size: 50
+// Get monitoring items
+await client.callTool('zabbix_get_items', {
+    hostids: ['10084'],
+    output: ['itemid', 'name', 'key_', 'lastvalue'],
+    search: { key_: 'system.cpu' }
 });
 
-// Get domain details
-await client.callTool('upguard_get_domain_details', {
-    hostname: 'example.com'
-});
-
-// List IP addresses
-await client.callTool('upguard_list_ips', {
-    page_size: 50
+// Create monitoring item
+await client.callTool('zabbix_create_item', {
+    hostid: '10084',
+    name: 'CPU utilization',
+    key_: 'system.cpu.util',
+    type: 0,
+    value_type: 0,
+    delay: '60s',
+    units: '%'
 });
 ```
 
-### Vulnerability Tracking
+### Maintenance Management
 ```javascript
-// Get vendor vulnerabilities
-await client.callTool('upguard_get_vendor_vulnerabilities', {
-    primary_hostname: 'vendor.com',
-    page_size: 100
+// Create maintenance window
+await client.callTool('zabbix_create_maintenance', {
+    name: 'Weekly Server Maintenance',
+    active_since: Math.floor(Date.now() / 1000),
+    active_till: Math.floor(Date.now() / 1000) + 7200,
+    hosts: [{ hostid: '10084' }],
+    timeperiods: [{
+        timeperiod_type: 0,
+        start_date: Math.floor(Date.now() / 1000),
+        period: 7200
+    }]
 });
 ```
 
-### Data Breach Monitoring
-```javascript
-// List identity breaches
-await client.callTool('upguard_list_identity_breaches', {
-    page_size: 50
-});
+## 🔧 Direct API Usage
 
-// Get breach details
-await client.callTool('upguard_get_identity_breach', {
-    id: 12345
-});
-```
-
-## 🔍 Common Use Cases
-
-### 1. Vendor Risk Assessment Workflow
+You can also use the clean modern interface directly:
 
 ```javascript
-// Step 1: Get vendor risks
-const risks = await client.callTool('upguard_get_vendor_risks', {
-    primary_hostname: 'vendor.com'
-});
+const { request, getVersion, checkConnection } = require('./src/api/zabbix-client');
 
-// Step 2: Get detailed vulnerabilities
-const vulnerabilities = await client.callTool('upguard_get_vendor_vulnerabilities', {
-    primary_hostname: 'vendor.com'
-});
+async function example() {
+    // Check connection
+    const connected = await checkConnection();
+    console.log(`Connected: ${connected}`);
+    
+    // Get API version
+    const version = await getVersion();
+    console.log(`Zabbix API Version: ${version}`);
+    
+    // Make direct API calls
+    const hosts = await request('host.get', {
+        output: ['hostid', 'host', 'name'],
+        selectInterfaces: ['interfaceid', 'ip']
+    });
+    console.log(`Found ${hosts.length} hosts`);
+    
+    const problems = await request('problem.get', {
+        output: 'extend',
+        selectTags: 'extend',
+        recent: true,
+        limit: 10
+    });
+    console.log(`Found ${problems.length} problems`);
+}
 
-// Step 3: Check for data breaches
-const breaches = await client.callTool('upguard_list_identity_breaches', {
-    page_size: 100
-});
+example().catch(console.error);
 ```
 
-### 2. Security Monitoring Dashboard
+## 🔍 Testing & Verification
 
-```javascript
-// Get overview data
-const vendors = await client.callTool('upguard_list_monitored_vendors', {
-    include_risks: true,
-    page_size: 100
-});
-
-const domains = await client.callTool('upguard_list_domains', {
-    page_size: 100
-});
-
-const breaches = await client.callTool('upguard_list_identity_breaches', {
-    page_size: 50
-});
+### Test Authentication
+```bash
+# Test authentication configuration
+node test-auth-modernization.js
 ```
 
-### 3. Compliance Reporting
-
-```javascript
-// Generate vendor risk report
-const report = await client.callTool('upguard_create_vendor_report', {
-    vendor_primary_hostname: 'vendor.com',
-    report_type: 'detailed'
-});
-
-// Check report status
-const status = await client.callTool('upguard_get_report_status', {
-    queued_report_id: report.report_id
-});
+### Test Clean Interface
+```bash
+# Test clean interface (no legacy methods)
+node test-clean-interface.js
 ```
 
-## 🛠️ Troubleshooting
+### Test All Tools
+```bash
+# Run comprehensive tests
+npm test
+```
+
+## 🎯 Next Steps
+
+1. **Explore the API Reference**: Check `API_REFERENCE.md` for complete tool documentation
+2. **Review Examples**: See `EXAMPLES.md` for practical usage patterns
+3. **Authentication Guide**: Read `AUTHENTICATION_GUIDE.md` for detailed authentication setup
+4. **Production Deployment**: Follow `DOCKER_SETUP.md` for containerized deployment
+
+## 🆘 Troubleshooting
 
 ### Common Issues
 
-#### 1. Authentication Errors
-```
-Error: 401 Unauthorized
-```
-**Solution**: Verify your API credentials in the `.env` file or environment variables.
+#### "No authentication method configured"
+**Solution**: Set either `ZABBIX_API_TOKEN` or `ZABBIX_USERNAME`+`ZABBIX_PASSWORD`
 
-#### 2. Tool Not Found
-```
-Error: Tool 'tool_name' not found
-```
-**Solution**: Check the tool name spelling. Use `client.listTools()` to see available tools.
+#### "Connection failed"
+**Solutions**:
+- Verify `ZABBIX_API_URL` is correct
+- Check Zabbix server accessibility
+- Validate SSL certificates
 
-#### 3. Parameter Validation Errors
-```
-Error: Invalid parameter 'hostname'
-```
-**Solution**: Check the parameter names match the Swagger specification. See [swagger-api-examples.md](swagger-api-examples.md) for correct parameters.
-
-#### 4. Server Won't Start
-```
-Error: Tool registration failed
-```
-**Solution**: Check for duplicate tool registrations or syntax errors in tool files.
+#### "Authentication failed"
+**Solutions**:
+- Verify API token is valid and not expired
+- Check username/password are correct
+- Ensure user has API access permissions
 
 ### Debug Mode
-
-Enable debug logging:
-
 ```bash
-DEBUG=upguard:* node src/index.js
+# Enable debug logging
+LOG_LEVEL=debug node src/index.js
 ```
-
-### Validate Configuration
-
-```bash
-# Test API connectivity
-node -e "
-const api = require('./src/api');
-api.getAvailableRisksV2()
-  .then(() => console.log('✅ API connection successful'))
-  .catch(err => console.error('❌ API connection failed:', err.message));
-"
-```
-
-## 📚 Next Steps
-
-1. **Explore All Tools**: See [swagger-api-examples.md](swagger-api-examples.md) for comprehensive examples
-2. **Integration Patterns**: Check [documentation-recommendations.md](documentation-recommendations.md) for advanced patterns
-3. **API Reference**: Review the complete Swagger specification in `swagger.json`
-4. **Custom Workflows**: Build custom security monitoring workflows using the MCP tools
-
-## 🔗 Additional Resources
-
-- **UpGuard API Documentation**: [https://cyber-risk.upguard.com/api/public/docs](https://cyber-risk.upguard.com/api/public/docs)
-- **MCP Protocol**: [https://modelcontextprotocol.io](https://modelcontextprotocol.io)
-- **Claude Desktop**: [https://claude.ai/desktop](https://claude.ai/desktop)
-
-## 💡 Pro Tips
-
-1. **Pagination**: Most list endpoints support pagination. Use `page_size` and `page_token` for large datasets.
-2. **Filtering**: Use label filters to focus on specific vendor categories or risk types.
-3. **Batch Operations**: Use bulk tools for managing multiple domains or IPs efficiently.
-4. **Real-time Updates**: Set up webhooks for real-time security event notifications.
-5. **Performance**: Cache frequently accessed data like vendor lists to improve response times.
 
 ---
 
-**Need Help?** Check the troubleshooting section above or review the comprehensive examples in [swagger-api-examples.md](swagger-api-examples.md). 
+**🎉 You're ready to start monitoring with Zabbix MCP Server!**
+
+The server provides 90+ tools across 19 categories for comprehensive Zabbix integration with modern authentication and a clean, professional interface. 

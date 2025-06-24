@@ -1,389 +1,487 @@
-# Testing Guide
+# Zabbix MCP Server - Testing Guide
 
-## Overview
+This document provides comprehensive information about testing the Zabbix MCP Server, including unit tests, integration tests, and examples.
 
-This document provides comprehensive information about testing the UpGuard CyberRisk MCP Server, including unit tests, integration tests, and examples.
+## 🧪 Test Structure
 
-## Test Structure
+The testing framework is organized into several categories:
 
-### Current Test Coverage
+### **1. Unit Tests** (`src/__tests__/`)
+- **API Module Tests**: Individual API module testing
+- **Configuration Tests**: Environment and configuration validation
+- **Cache Tests**: Redis caching functionality
+- **Retry Logic Tests**: Error handling and retry mechanisms
+- **Health Check Tests**: Server health monitoring
 
-- **Configuration Tests** (`src/__tests__/config.test.js`)
-  - Environment variable handling
-  - Default configuration validation
-  - Configuration overrides
+### **2. Integration Tests** (`examples/integration-test.js`)
+- **End-to-end Testing**: Complete workflow testing
+- **Authentication Testing**: Both API token and username/password
+- **Tool Functionality**: All 90+ MCP tools
+- **Error Handling**: Graceful failure scenarios
 
-- **API Client Tests** (`src/__tests__/api/client.test.js`)
-  - HTTP method testing (GET, POST, PUT, DELETE)
-  - Error handling and resilience
-  - Request/response data handling
+### **3. Example Clients** (`examples/`)
+- **MCP Client Example**: Comprehensive tool demonstration
+- **HTTP Client**: HTTP transport testing
+- **Integration Test**: Automated test suite
 
-- **Tool Registration Tests** (`src/__tests__/tools/risks.test.js`)
-  - Tool registration validation
-  - Handler function testing
-  - Schema validation
+## 🚀 Running Tests
 
-- **MCP Server Tests** (`src/__tests__/mcp-server.test.js`)
-  - Server initialization
-  - Tool registration flow
-  - Logger integration
+### **Prerequisites**
 
-- **Integration Tests** (`src/__tests__/integration.test.js`)
-  - End-to-end API workflows
-  - Caching behavior
-  - Error handling patterns
-  - Performance and resilience testing
+1. **Node.js**: Version 18 or higher
+2. **Zabbix Server**: Running and accessible
+3. **Environment Variables**: Properly configured
 
-- **Utility Tests**
-  - Cache implementation (`src/__tests__/cache.test.js`)
-  - Retry and circuit breaker logic (`src/__tests__/retry.test.js`)
-  - API module (`src/__tests__/api.test.js`)
+### **Environment Setup**
 
-## Running Tests
-
-### Basic Test Commands
+Create a `.env` file or set environment variables:
 
 ```bash
-# Run all tests
+# API Token Authentication (Recommended)
+export ZABBIX_API_URL="https://your-zabbix-server/api_jsonrpc.php"
+export ZABBIX_API_TOKEN="your_api_token_here"
+
+# Or Username/Password Authentication
+export ZABBIX_API_URL="https://your-zabbix-server/api_jsonrpc.php"
+export ZABBIX_USERNAME="Admin"
+export ZABBIX_PASSWORD="your_password"
+
+# Optional
+export LOG_LEVEL="info"
+export ZABBIX_REQUEST_TIMEOUT="120000"
+```
+
+### **Running Unit Tests**
+
+```bash
+# Install dependencies
+npm install
+
+# Run all unit tests
 npm test
+
+# Run specific test categories
+npm run test:api
+npm run test:config
+npm run test:cache
+npm run test:health
 
 # Run tests with coverage
 npm run test:coverage
 
 # Run tests in watch mode
 npm run test:watch
-
-# Run specific test file
-npm test -- src/__tests__/config.test.js
-
-# Run tests matching pattern
-npm test -- --testNamePattern="should handle errors"
 ```
 
-### Test Environment Setup
+### **Running Integration Tests**
 
-Tests use a dedicated test environment with:
-- Mock API key: `test-api-key-for-testing`
-- Isolated configuration
-- Mocked external dependencies
+```bash
+# Run complete integration test suite
+node examples/integration-test.js
 
-## Writing Tests
+# Run with debug logging
+LOG_LEVEL=debug node examples/integration-test.js
 
-### Unit Test Example
+# Run with specific timeout
+ZABBIX_REQUEST_TIMEOUT=180000 node examples/integration-test.js
+```
+
+### **Running Example Clients**
+
+```bash
+# Run comprehensive MCP client example
+node examples/mcp-client-example.js
+
+# Run HTTP client test
+node examples/http-client.js
+
+# Run all examples
+npm run examples
+```
+
+## 📋 Test Categories
+
+### **1. Authentication Tests**
+
+Tests both authentication methods and validates API connectivity:
 
 ```javascript
-const { someFunction } = require('../src/module');
+// API Token Authentication Test
+describe('API Token Authentication', () => {
+    test('should authenticate with valid API token', async () => {
+        const result = await client.callTool('zabbix_get_api_info', {});
+        expect(result).toBeDefined();
+        expect(result.content[0].text).toContain('version');
+    });
+});
 
-describe('Module Name', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  test('should perform expected behavior', async () => {
-    // Arrange
-    const input = { param: 'value' };
-    const expectedOutput = { result: 'expected' };
-
-    // Act
-    const result = await someFunction(input);
-
-    // Assert
-    expect(result).toEqual(expectedOutput);
-  });
+// Username/Password Authentication Test
+describe('Username/Password Authentication', () => {
+    test('should authenticate with valid credentials', async () => {
+        const login = await client.callTool('zabbix_login', {
+            username: process.env.ZABBIX_USERNAME,
+            password: process.env.ZABBIX_PASSWORD
+        });
+        expect(login).toBeDefined();
+    });
 });
 ```
 
-### Integration Test Example
+### **2. Host Management Tests**
+
+Validates host-related operations:
 
 ```javascript
-describe('Integration Test', () => {
-  test('should handle complete workflow', async () => {
-    // Test real API interactions with proper mocking
-    const mockResponse = { data: 'test' };
-    api.someMethod.mockResolvedValue(mockResponse);
+describe('Host Management', () => {
+    test('should retrieve hosts', async () => {
+        const hosts = await client.callTool('zabbix_get_hosts', {
+            output: ['hostid', 'host', 'name'],
+            limit: 5
+        });
+        expect(Array.isArray(JSON.parse(hosts.content[0].text))).toBe(true);
+    });
 
-    const result = await performWorkflow();
-
-    expect(api.someMethod).toHaveBeenCalledWith(expectedParams);
-    expect(result).toMatchObject(expectedResult);
-  });
+    test('should retrieve host groups', async () => {
+        const groups = await client.callTool('zabbix_get_hostgroups', {
+            output: ['groupid', 'name'],
+            limit: 5
+        });
+        expect(Array.isArray(JSON.parse(groups.content[0].text))).toBe(true);
+    });
 });
 ```
 
-## Test Categories
+### **3. Monitoring Tests**
 
-### 1. Configuration Tests
-- **Purpose**: Validate configuration loading and environment variable handling
-- **Coverage**: Default values, overrides, validation
-- **Key Tests**:
-  - Default API configuration
-  - Environment variable overrides
-  - Invalid input handling
-
-### 2. API Client Tests
-- **Purpose**: Test HTTP client functionality and resilience
-- **Coverage**: All HTTP methods, error handling, circuit breaker
-- **Key Tests**:
-  - Request/response handling
-  - Network error scenarios
-  - Timeout and retry logic
-
-### 3. Tool Registration Tests
-- **Purpose**: Validate MCP tool registration and execution
-- **Coverage**: Tool schemas, handlers, error handling
-- **Key Tests**:
-  - Tool registration count and names
-  - Handler parameter validation
-  - Error propagation
-
-### 4. Integration Tests
-- **Purpose**: End-to-end testing of complete workflows
-- **Coverage**: API interactions, caching, resilience patterns
-- **Key Tests**:
-  - Complete tool execution flows
-  - Caching behavior validation
-  - Error recovery patterns
-
-## Test Data and Mocking
-
-### API Mocking Strategy
+Tests monitoring capabilities:
 
 ```javascript
-// Mock entire API module
-jest.mock('../../api');
+describe('Monitoring', () => {
+    test('should retrieve items', async () => {
+        const items = await client.callTool('zabbix_get_items', {
+            output: ['itemid', 'name', 'key_'],
+            filter: { status: 0 },
+            limit: 5
+        });
+        expect(JSON.parse(items.content[0].text)).toBeDefined();
+    });
 
-// Mock specific methods
-api.getAvailableRisks.mockResolvedValue(mockData);
-api.getAccountRisks.mockRejectedValue(new Error('API Error'));
+    test('should retrieve triggers', async () => {
+        const triggers = await client.callTool('zabbix_get_triggers', {
+            output: ['triggerid', 'description'],
+            filter: { status: 0 },
+            limit: 5
+        });
+        expect(JSON.parse(triggers.content[0].text)).toBeDefined();
+    });
+
+    test('should retrieve problems', async () => {
+        const problems = await client.callTool('zabbix_get_problems', {
+            output: 'extend',
+            recent: true,
+            limit: 5
+        });
+        expect(JSON.parse(problems.content[0].text)).toBeDefined();
+    });
+});
 ```
 
-### Test Data Patterns
+### **4. Historical Data Tests**
+
+Validates historical data retrieval:
 
 ```javascript
-// Standard mock response structure
-const mockApiResponse = {
-  data: [
-    { id: 1, name: 'Test Item', severity: 'high' },
-    { id: 2, name: 'Another Item', severity: 'medium' }
-  ],
-  pagination: {
-    total: 2,
-    page: 1,
-    limit: 50
-  }
+describe('Historical Data', () => {
+    test('should retrieve events', async () => {
+        const events = await client.callTool('zabbix_get_events', {
+            output: ['eventid', 'source', 'object'],
+            time_from: Math.floor(Date.now() / 1000) - 3600,
+            limit: 5
+        });
+        expect(JSON.parse(events.content[0].text)).toBeDefined();
+    });
+
+    test('should retrieve trends', async () => {
+        const trends = await client.callTool('zabbix_get_trends', {
+            itemids: [],
+            time_from: Math.floor(Date.now() / 1000) - 86400,
+            limit: 10
+        });
+        expect(JSON.parse(trends.content[0].text)).toBeDefined();
+    });
+});
+```
+
+### **5. User Management Tests**
+
+Tests user and permission operations:
+
+```javascript
+describe('User Management', () => {
+    test('should retrieve users', async () => {
+        const users = await client.callTool('zabbix_get_users', {
+            output: ['userid', 'username', 'name'],
+            limit: 5
+        });
+        expect(Array.isArray(JSON.parse(users.content[0].text))).toBe(true);
+    });
+
+    test('should retrieve user groups', async () => {
+        const userGroups = await client.callTool('zabbix_get_usergroups', {
+            output: ['usrgrpid', 'name'],
+            status: 0
+        });
+        expect(Array.isArray(JSON.parse(userGroups.content[0].text))).toBe(true);
+    });
+});
+```
+
+## 🔧 Test Configuration
+
+### **Jest Configuration** (`jest.config.js`)
+
+```javascript
+module.exports = {
+    testEnvironment: 'node',
+    collectCoverageFrom: [
+        'src/**/*.js',
+        '!src/**/*.test.js',
+        '!src/__tests__/**'
+    ],
+    coverageDirectory: 'coverage',
+    coverageReporters: ['text', 'lcov', 'html'],
+    testMatch: [
+        '**/__tests__/**/*.test.js'
+    ],
+    setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.js'],
+    testTimeout: 30000
 };
 ```
 
-## Performance Testing
-
-### Load Testing Example
+### **Test Setup** (`src/__tests__/setup.js`)
 
 ```javascript
-test('should handle concurrent requests efficiently', async () => {
-  const promises = Array(10).fill().map(() => 
-    performApiCall()
-  );
-  
-  const results = await Promise.all(promises);
-  
-  expect(results).toHaveLength(10);
-  expect(results.every(r => r.success)).toBe(true);
-});
+// Global test configuration
+process.env.NODE_ENV = 'test';
+process.env.LOG_LEVEL = 'error';
+
+// Mock external dependencies if needed
+jest.setTimeout(30000);
+
+// Global test utilities
+global.testConfig = {
+    apiUrl: process.env.ZABBIX_API_URL || 'https://demo.zabbix.com/api_jsonrpc.php',
+    timeout: 30000
+};
 ```
 
-## Error Testing Patterns
+## 📊 Performance Testing
 
-### Network Errors
+### **Load Testing**
+
+Test server performance under load:
 
 ```javascript
-test('should handle network timeouts', async () => {
-  const timeoutError = new Error('Timeout');
-  timeoutError.code = 'ECONNABORTED';
-  
-  api.method.mockRejectedValue(timeoutError);
-  
-  await expect(performAction()).rejects.toThrow('Timeout');
-});
-```
-
-### API Errors
-
-```javascript
-test('should handle API rate limiting', async () => {
-  const rateLimitError = new Error('Rate Limited');
-  rateLimitError.response = { status: 429 };
-  
-  api.method.mockRejectedValue(rateLimitError);
-  
-  await expect(performAction()).rejects.toThrow('Rate Limited');
-});
-```
-
-## Test Coverage Goals
-
-### Current Coverage Metrics
-- **Statements**: ~54%
-- **Branches**: ~73%
-- **Functions**: ~36%
-- **Lines**: ~54%
-
-### Coverage Targets (Realistic)
-- **Statements**: 60%+
-- **Branches**: 75%+
-- **Functions**: 50%+
-- **Lines**: 60%+
-
-### Coverage Targets (Aspirational)
-- **Statements**: 80%+
-- **Branches**: 85%+
-- **Functions**: 70%+
-- **Lines**: 80%+
-
-## Continuous Integration
-
-### Test Pipeline
-1. **Lint Check**: ESLint validation
-2. **Unit Tests**: Fast, isolated tests
-3. **Integration Tests**: API interaction tests
-4. **Coverage Report**: Coverage threshold validation
-
-### Test Commands in CI
-
-```bash
-# CI test command
-npm run test:ci
-
-# Coverage validation (current realistic thresholds)
-npm run test:coverage -- --coverageThreshold='{"global":{"statements":50,"branches":70,"functions":30,"lines":50}}'
-```
-
-## Debugging Tests
-
-### Common Issues
-
-1. **Mock Not Working**
-   ```javascript
-   // Ensure proper mock setup
-   jest.clearAllMocks(); // in beforeEach
-   ```
-
-2. **Async Test Failures**
-   ```javascript
-   // Always await async operations
-   await expect(asyncFunction()).rejects.toThrow();
-   ```
-
-3. **Environment Variables**
-   ```javascript
-   // Reset environment in tests
-   const originalEnv = process.env;
-   afterAll(() => { process.env = originalEnv; });
-   ```
-
-### Debug Commands
-
-```bash
-# Run tests with debug output
-npm test -- --verbose
-
-# Run single test with debugging
-npm test -- --testNamePattern="specific test" --verbose
-```
-
-## Best Practices
-
-### Test Organization
-- Group related tests in `describe` blocks
-- Use descriptive test names
-- Follow Arrange-Act-Assert pattern
-- Clean up after tests
-
-### Mocking Guidelines
-- Mock external dependencies
-- Use realistic test data
-- Test both success and failure scenarios
-- Verify mock calls with proper parameters
-
-### Performance Considerations
-- Keep tests fast and focused
-- Use appropriate timeouts
-- Avoid unnecessary async operations
-- Clean up resources properly
-
-## Examples and Templates
-
-### Tool Test Template
-
-```javascript
-const toolModule = require('../../tools/toolName');
-const api = require('../../api');
-
-jest.mock('../../api');
-
-describe('Tool Name', () => {
-  let mockServer;
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockServer = {
-      tool: jest.fn(),
-      registeredTools: []
-    };
-    mockServer.tool.mockImplementation((name, desc, schema, handler) => {
-      mockServer.registeredTools.push({ name, desc, schema, handler });
+describe('Performance Tests', () => {
+    test('should handle concurrent requests', async () => {
+        const promises = [];
+        for (let i = 0; i < 10; i++) {
+            promises.push(client.callTool('zabbix_get_api_info', {}));
+        }
+        
+        const results = await Promise.all(promises);
+        expect(results).toHaveLength(10);
+        results.forEach(result => {
+            expect(result.content[0].text).toBeDefined();
+        });
     });
-  });
 
-  test('should register tool correctly', () => {
-    toolModule.registerTools(mockServer);
-    
-    expect(mockServer.tool).toHaveBeenCalled();
-    expect(mockServer.registeredTools).toHaveLength(1);
-  });
+    test('should respond within acceptable time', async () => {
+        const start = Date.now();
+        await client.callTool('zabbix_get_hosts', { limit: 10 });
+        const duration = Date.now() - start;
+        
+        expect(duration).toBeLessThan(5000); // 5 seconds max
+    });
 });
 ```
 
-### API Test Template
+### **Memory Testing**
+
+Monitor memory usage during tests:
 
 ```javascript
-const apiModule = require('../../api');
-const client = require('../../api/client');
-
-jest.mock('../../api/client');
-
-describe('API Module', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  test('should make correct API call', async () => {
-    const mockResponse = { data: 'test' };
-    client.get.mockResolvedValue(mockResponse);
-
-    const result = await apiModule.someMethod();
-
-    expect(client.get).toHaveBeenCalledWith('/expected/endpoint');
-    expect(result).toEqual(mockResponse);
-  });
+describe('Memory Tests', () => {
+    test('should not leak memory', async () => {
+        const initialMemory = process.memoryUsage().heapUsed;
+        
+        // Perform multiple operations
+        for (let i = 0; i < 100; i++) {
+            await client.callTool('zabbix_get_api_info', {});
+        }
+        
+        // Force garbage collection
+        if (global.gc) global.gc();
+        
+        const finalMemory = process.memoryUsage().heapUsed;
+        const memoryIncrease = finalMemory - initialMemory;
+        
+        // Memory increase should be reasonable
+        expect(memoryIncrease).toBeLessThan(50 * 1024 * 1024); // 50MB max
+    });
 });
 ```
 
-## Troubleshooting
+## 🚨 Error Testing
 
-### Common Test Failures
+### **Authentication Errors**
 
-1. **Rate Limiting**: Tests may fail due to API rate limits
-   - Solution: Use proper mocking for external API calls
+```javascript
+describe('Authentication Error Handling', () => {
+    test('should handle invalid API token', async () => {
+        const invalidClient = createClientWithToken('invalid_token');
+        
+        await expect(
+            invalidClient.callTool('zabbix_get_api_info', {})
+        ).rejects.toThrow(/authentication/i);
+    });
 
-2. **Timing Issues**: Async tests may have race conditions
-   - Solution: Use proper async/await patterns
+    test('should handle invalid credentials', async () => {
+        await expect(
+            client.callTool('zabbix_login', {
+                username: 'invalid',
+                password: 'invalid'
+            })
+        ).rejects.toThrow(/login/i);
+    });
+});
+```
 
-3. **Environment Conflicts**: Tests may interfere with each other
-   - Solution: Proper cleanup in beforeEach/afterEach
+### **Network Errors**
 
-### Getting Help
+```javascript
+describe('Network Error Handling', () => {
+    test('should handle connection timeout', async () => {
+        const timeoutClient = createClientWithTimeout(100); // 100ms timeout
+        
+        await expect(
+            timeoutClient.callTool('zabbix_get_hosts', {})
+        ).rejects.toThrow(/timeout/i);
+    });
 
-- Check test logs for detailed error messages
-- Use `--verbose` flag for more detailed output
-- Review mock setup and ensure proper isolation
-- Verify environment variable configuration 
+    test('should handle server unavailable', async () => {
+        const invalidUrlClient = createClientWithUrl('http://invalid-server/api');
+        
+        await expect(
+            invalidUrlClient.callTool('zabbix_get_api_info', {})
+        ).rejects.toThrow(/connection/i);
+    });
+});
+```
+
+## 📈 Continuous Integration
+
+### **GitHub Actions** (`.github/workflows/test.yml`)
+
+```yaml
+name: Test Suite
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - run: npm ci
+    - run: npm test
+    
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage/lcov.info
+```
+
+## 🔍 Debugging Tests
+
+### **Debug Mode**
+
+Run tests with detailed logging:
+
+```bash
+# Enable debug logging
+DEBUG=* npm test
+
+# Enable specific debug categories
+DEBUG=zabbix:* npm test
+
+# Run with Node.js inspector
+node --inspect-brk node_modules/.bin/jest
+```
+
+### **Test Isolation**
+
+Run specific tests:
+
+```bash
+# Run specific test file
+npm test -- --testPathPattern=api.test.js
+
+# Run specific test case
+npm test -- --testNamePattern="should authenticate"
+
+# Run in band (no parallel execution)
+npm test -- --runInBand
+```
+
+## 📝 Best Practices
+
+### **Test Organization**
+
+1. **Group related tests** using `describe` blocks
+2. **Use descriptive test names** that explain what's being tested
+3. **Keep tests independent** - each test should be able to run in isolation
+4. **Use setup and teardown** for common initialization/cleanup
+
+### **Assertions**
+
+1. **Test both success and failure cases**
+2. **Verify response structure** not just existence
+3. **Use appropriate matchers** for different data types
+4. **Test edge cases** and boundary conditions
+
+### **Performance**
+
+1. **Set reasonable timeouts** for different types of tests
+2. **Use mocks** for external dependencies when appropriate
+3. **Run expensive tests** in separate suites
+4. **Monitor test execution time** and optimize slow tests
+
+### **Maintenance**
+
+1. **Keep tests up to date** with API changes
+2. **Remove obsolete tests** when features are deprecated
+3. **Document complex test scenarios**
+4. **Review test coverage** regularly
+
+## 🎯 Test Coverage Goals
+
+- **Unit Tests**: 90%+ code coverage
+- **Integration Tests**: 100% tool coverage
+- **Error Handling**: 100% error path coverage
+- **Performance**: Response time benchmarks
+- **Security**: Authentication and authorization testing
+
+This comprehensive testing strategy ensures the Zabbix MCP Server maintains high quality, reliability, and performance across all supported features and use cases. 

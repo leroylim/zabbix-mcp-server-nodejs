@@ -2,110 +2,122 @@
 
 ## **Overview**
 
-The Zabbix MCP Server supports **two authentication methods** for connecting to Zabbix API, depending on your Zabbix version and security requirements.
+The Zabbix MCP Server supports **two authentication methods** for connecting to Zabbix API with a **clean, modern interface** that automatically detects and uses the best authentication method available.
 
 ## **🔑 Authentication Methods**
 
-### **Method 1: Username/Password Authentication (Traditional)**
+### **Method 1: API Token Authentication (Recommended)**
+- **Used by**: Zabbix 5.4+ (recommended for production)
+- **Security**: Direct API token authentication (more secure)
+- **Implementation**: ✅ **Fully implemented** with automatic detection
+
+### **Method 2: Username/Password Authentication (Traditional)**
 - **Used by**: Zabbix 5.0+ (all versions)
 - **Security**: Session-based authentication with automatic token management
-- **Implementation**: Built into both `client.js` and `zabbix-client.js`
-
-### **Method 2: API Token Authentication (Modern)**
-- **Used by**: Zabbix 5.4+ (recommended for newer versions)
-- **Security**: Direct API token authentication (more secure)
-- **Implementation**: Currently **not implemented** in this MCP server
+- **Implementation**: ✅ **Fully implemented** with automatic login/logout
 
 ---
 
-## **📋 Current Implementation Analysis**
+## **📋 Current Implementation Status**
 
-### **✅ What's Currently Supported**
+### **✅ What's Fully Supported**
+
+**API Token Authentication (Recommended):**
+```javascript
+// Environment Variables:
+ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php
+ZABBIX_API_TOKEN=your_api_token_here
+```
 
 **Username/Password Authentication:**
 ```javascript
-// Environment Variables Required:
+// Environment Variables:
 ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php
 ZABBIX_USERNAME=Admin
 ZABBIX_PASSWORD=your_password
 ```
 
 **Implementation Details:**
-- **Primary Client**: `src/api/client.js` (custom axios-based)
-- **Enhanced Client**: `src/api/zabbix-client.js` (zabbix-utils library)
-- **Authentication Flow**: 
-  1. Call `user.login` with username/password
-  2. Receive session token
-  3. Use token for subsequent API calls
-  4. Auto-refresh token when expired
-
-### **❌ What's NOT Currently Supported**
-
-**API Token Authentication:**
-```javascript
-// Environment Variables (NOT IMPLEMENTED):
-ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php
-ZABBIX_API_TOKEN=your_api_token_here
-```
+- **Unified Client**: `src/api/zabbix-client.js` (single, clean interface)
+- **Automatic Detection**: Automatically chooses API token when available
+- **Clean Interface**: 5 modern methods only (no legacy baggage)
+- **Smart Fallback**: Falls back to username/password if token not available
 
 ---
 
-## **🔧 Current Authentication Architecture**
+## **🔧 Modern Authentication Architecture**
 
-### **Dual Client Implementation**
+### **Unified Client Implementation**
 
-The MCP server currently uses **two parallel authentication systems**:
+The MCP server uses a **single, clean authentication system**:
 
-#### **1. Legacy Client (`src/api/client.js`)**
+#### **Smart Authentication Detection**
 ```javascript
-// Traditional axios-based implementation
-async function login() {
-    const params = { username: config.api.username, password: config.api.password };
-    const result = await zabbixRequest('user.login', params); 
-    authToken = result; 
-    return authToken;
+// Automatic authentication method detection
+function detectAuthMethod() {
+    const hasToken = !!process.env.ZABBIX_API_TOKEN;
+    const hasCredentials = !!(process.env.ZABBIX_USERNAME && process.env.ZABBIX_PASSWORD);
+    
+    if (hasToken) {
+        logger.info('[Config] Using API token authentication (Zabbix 5.4+)');
+        return 'token';
+    } else if (hasCredentials) {
+        logger.info('[Config] Using username/password authentication');
+        return 'password';
+    } else {
+        logger.warn('[Config] No authentication method configured');
+        return 'none';
+    }
 }
 ```
 
-#### **2. Enhanced Client (`src/api/zabbix-client.js`)**
+#### **Clean Modern Interface**
 ```javascript
-// zabbix-utils library implementation
-this.api = new AsyncZabbixAPI({
-    url: config.api.url,
-    user: config.api.username,        // Username/password only
-    password: config.api.password,    // No API token support
-    validateCerts: !config.api.ignoreSelfSignedCert,
-    timeout: Math.floor(config.api.timeout / 1000)
-});
+// Available methods (no legacy methods)
+const { 
+    getClient,        // Get authenticated client instance
+    request,          // Make API calls
+    checkConnection,  // Check connection status
+    disconnect,       // Disconnect and cleanup
+    getVersion        // Get API version
+} = require('./src/api/zabbix-client');
 ```
-
----
-
-## **⚠️ Why You're Seeing Password Warnings**
-
-The warnings you're seeing:
-```
-[ERROR] [Zabbix API Client] CRITICAL: ZABBIX_PASSWORD environment variable is not set. API calls will fail.
-[WARN] ZABBIX_PASSWORD not found in environment variables
-```
-
-**Occur because:**
-1. **No `ZABBIX_PASSWORD` environment variable** is set
-2. **Configuration validation** runs at module import time
-3. **API calls will fail** without credentials (but module loading succeeds)
-
-**These warnings are NORMAL** when:
-- Testing without actual Zabbix credentials
-- Running in development/test mode
-- Using the MCP server for demonstration
 
 ---
 
 ## **🚀 How to Configure Authentication**
 
-### **Option 1: Username/Password (Current)**
+### **Option 1: API Token Authentication (Recommended)**
 
-**Set Environment Variables:**
+#### **Step 1: Generate API Token in Zabbix**
+1. **Login to Zabbix UI**
+2. **Navigate to**: `Administration → General → Tokens`
+3. **Click**: `Create token`
+4. **Configure**:
+   - Name: `MCP Server Token`
+   - User: Select appropriate user
+   - Expires at: Set expiration (optional)
+5. **Copy the generated token**
+
+#### **Step 2: Set Environment Variables**
+```bash
+# Windows PowerShell
+$env:ZABBIX_API_URL="https://your-zabbix-server/api_jsonrpc.php"
+$env:ZABBIX_API_TOKEN="your_api_token_here"
+
+# Linux/macOS
+export ZABBIX_API_URL="https://your-zabbix-server/api_jsonrpc.php"
+export ZABBIX_API_TOKEN="your_api_token_here"
+```
+
+#### **Step 3: Create `.env` file**
+```env
+ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php
+ZABBIX_API_TOKEN=your_api_token_here
+```
+
+### **Option 2: Username/Password Authentication**
+
 ```bash
 # Windows PowerShell
 $env:ZABBIX_API_URL="https://your-zabbix-server/api_jsonrpc.php"
@@ -123,47 +135,55 @@ export ZABBIX_PASSWORD="your_password"
 ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php
 ZABBIX_USERNAME=Admin
 ZABBIX_PASSWORD=your_password
-ZABBIX_IGNORE_SELFSIGNED_CERT=true
-```
-
-### **Option 2: API Token (NOT YET IMPLEMENTED)**
-
-**Would require code changes to support:**
-```javascript
-// Proposed implementation for config.js
-const config = {
-    api: {
-        url: process.env.ZABBIX_API_URL,
-        // Either username/password OR API token
-        username: process.env.ZABBIX_USERNAME,
-        password: process.env.ZABBIX_PASSWORD,
-        apiToken: process.env.ZABBIX_API_TOKEN,  // NEW
-        authMethod: process.env.ZABBIX_AUTH_METHOD || 'password' // NEW
-    }
-};
 ```
 
 ---
 
-## **🔍 Testing Without Credentials**
+## **🔍 Testing Authentication**
 
-**The MCP server CAN be tested without real Zabbix credentials:**
-
-1. **Module Loading**: ✅ All modules load successfully
-2. **Tool Registration**: ✅ All MCP tools register correctly  
-3. **API Function Export**: ✅ All enhanced functions are available
-4. **Actual API Calls**: ❌ Will fail without credentials
-
-**Test Enhanced API Migration:**
+### **Test Authentication Setup**
 ```bash
-# This works (tests module loading only)
-node -e "const api = require('./src/api'); console.log('Functions:', Object.keys(api).length);"
+# Test authentication configuration
+node test-auth-modernization.js
+```
 
-# This works (tests MCP tool registration)
-node -e "const { registerAllTools } = require('./src/tools'); console.log('Tools loaded');"
+**Expected Output:**
+```
+✅ Configuration supports both auth methods
+✅ Unified client with backward compatibility  
+✅ All enhanced API functions available
+✅ MCP tools integration working
+✅ Authentication method simulation working
+```
 
-# This fails (requires actual Zabbix connection)
-node -e "const api = require('./src/api'); api.getHosts().then(console.log);"
+### **Test Clean Interface**
+```bash
+# Test clean interface (no legacy methods)
+node test-clean-interface.js
+```
+
+**Expected Output:**
+```
+✅ All legacy methods removed successfully
+✅ Only modern interface methods available
+✅ All enhanced API functions working
+✅ Interface consistency verified
+```
+
+### **Manual Testing**
+```javascript
+// Test API connection
+const { checkConnection, getVersion } = require('./src/api/zabbix-client');
+
+(async () => {
+    const connected = await checkConnection();
+    console.log(`Connected: ${connected}`);
+    
+    if (connected) {
+        const version = await getVersion();
+        console.log(`Zabbix API Version: ${version}`);
+    }
+})();
 ```
 
 ---
@@ -174,57 +194,95 @@ node -e "const api = require('./src/api'); api.getHosts().then(console.log);"
 |---------|------------------|-----------|
 | **Zabbix Version** | 5.0+ | 5.4+ |
 | **Security** | Session-based | Direct token |
+| **Setup Complexity** | Simple | Requires token generation |
 | **Expiration** | Auto-managed | Manual/long-lived |
 | **Revocation** | Logout required | Instant revocation |
-| **MCP Server Support** | ✅ Implemented | ❌ Not implemented |
+| **Audit Trail** | Session logs | Token usage logs |
+| **MCP Server Support** | ✅ Fully implemented | ✅ Fully implemented |
 | **Recommended For** | Development/Testing | Production |
+| **Performance** | Login overhead | Direct access |
 
 ---
 
-## **🎯 Recommendations**
-
-### **For Current Usage**
-1. **Use username/password authentication** (only option available)
-2. **Set environment variables** to eliminate warnings
-3. **Test enhanced API migration** works without credentials
-4. **Implement API token support** in future version
+## **🎯 Best Practices**
 
 ### **For Production Deployment**
-1. **Implement API token authentication** for better security
-2. **Use dedicated service account** with minimal permissions
-3. **Enable certificate validation** in production
-4. **Implement token rotation** strategy
+1. **Use API token authentication** for better security
+2. **Create dedicated service account** with minimal permissions
+3. **Set token expiration** appropriately (30-90 days)
+4. **Monitor token usage** in Zabbix audit logs
+5. **Implement token rotation** strategy
+6. **Enable HTTPS** for API endpoint
 
 ### **For Development/Testing**
-1. **Warnings are normal** without credentials
-2. **Enhanced API migration is successful** (modules load correctly)
-3. **MCP tools register properly** (server functionality intact)
-4. **Focus on functionality testing** rather than credential warnings
+1. **Username/password is fine** for development
+2. **Use non-admin accounts** when possible
+3. **Test both authentication methods** during development
+4. **Use environment variables** instead of hardcoded credentials
+
+### **Security Recommendations**
+1. **Never commit credentials** to version control
+2. **Use `.env` files** for local development
+3. **Rotate tokens regularly** in production
+4. **Monitor authentication failures** in logs
+5. **Use RBAC** to limit API permissions
 
 ---
 
-## **✅ Migration Verification Results**
+## **🔧 Troubleshooting**
 
-**Based on our testing:**
+### **Common Issues**
 
-1. **✅ Enhanced API modules load successfully** 
-2. **✅ All 262 functions are available**
-3. **✅ MCP tools registration works correctly**
-4. **✅ zabbix-utils integration is functional**
-5. **⚠️ Credential warnings are expected** (no impact on functionality)
+#### **"No authentication method configured"**
+```
+[WARN] [Config] No authentication method configured
+```
+**Solution**: Set either `ZABBIX_API_TOKEN` or `ZABBIX_USERNAME`+`ZABBIX_PASSWORD`
 
-**Conclusion**: The enhanced API migration is **100% successful**. The password warnings are configuration-related, not migration issues.
+#### **"Connection failed"**
+```
+[ERROR] [Zabbix API Client] Failed to connect to Zabbix API
+```
+**Solutions**:
+- Check `ZABBIX_API_URL` is correct
+- Verify Zabbix server is accessible
+- Check firewall/network connectivity
+- Validate SSL certificates
+
+#### **"Authentication failed"**
+```
+[ERROR] [Zabbix API Client] Authentication failed
+```
+**Solutions**:
+- Verify API token is valid and not expired
+- Check username/password are correct
+- Ensure user has API access permissions
+- Check user account is not disabled
+
+### **Debug Mode**
+```bash
+# Enable debug logging
+LOG_LEVEL=debug node src/index.js
+```
 
 ---
 
-## **🔮 Future Enhancement: API Token Support**
+## **📈 Migration from Legacy System**
 
-**To implement API token authentication:**
+If upgrading from an older version:
 
-1. **Update Configuration** (`src/config.js`)
-2. **Modify Client Authentication** (`src/api/client.js`)
-3. **Update zabbix-utils Client** (`src/api/zabbix-client.js`)
-4. **Add Token Management Tools** (`src/tools/auth.js`)
-5. **Update Documentation** and examples
+### **What Changed**
+1. ✅ **API Token support added**
+2. ✅ **Clean interface implemented** (5 methods only)
+3. ✅ **Legacy methods removed** (zabbixRequest, ensureLogin, etc.)
+4. ✅ **Automatic authentication detection**
+5. ✅ **Unified client architecture**
 
-**This would provide modern, secure authentication for production deployments.** 
+### **Migration Steps**
+1. **Update environment variables** to use new names
+2. **Generate API tokens** for production
+3. **Test both authentication methods**
+4. **Update any custom code** to use new interface
+5. **Remove references to legacy methods**
+
+**The system maintains full backward compatibility for authentication while providing modern interface methods.** 

@@ -51,6 +51,39 @@ async function getActiveProblems(additionalOptions = {}) {
 }
 
 /**
+ * Get problems by single host ID
+ * @param {string} hostId - Single host ID
+ * @param {Object} additionalOptions - Additional options for the query
+ * @returns {Promise<Array>} Array of problems for the specified host
+ */
+async function getProblemsByHost(hostId, additionalOptions = {}) {
+    if (!hostId) {
+        throw new Error("getProblemsByHost expects a host ID.");
+    }
+
+    try {
+        logger.debug(`${config.logging.prefix} Getting problems for host: ${hostId}`);
+        
+        const options = {
+            output: ['eventid', 'objectid', 'name', 'severity', 'clock', 'acknowledged', 'r_eventid'],
+            hostids: [hostId],
+            selectHosts: ['hostid', 'host', 'name'],
+            selectTriggers: ['triggerid', 'description', 'priority'],
+            selectTags: ['tag', 'value'],
+            selectAcknowledges: ['acknowledgeid', 'userid', 'clock', 'message'],
+            sortfield: ['severity', 'clock'],
+            sortorder: 'DESC',
+            ...additionalOptions
+        };
+        
+        return await request('problem.get', options);
+    } catch (error) {
+        logger.error(`${config.logging.prefix} Failed to get problems by host:`, error.message);
+        throw new Error(`Failed to retrieve problems by host: ${error.message}`);
+    }
+}
+
+/**
  * Get problems by host IDs
  * @param {Array<string>} hostIds - Array of host IDs
  * @param {Object} additionalOptions - Additional options for the query
@@ -310,6 +343,7 @@ async function getProblemsByTriggers(triggerIds, additionalOptions = {}) {
 module.exports = {
     getProblems,
     getActiveProblems,
+    getProblemsByHost,
     getProblemsByHosts,
     getProblemsBySeverity,
     getUnacknowledgedProblems,

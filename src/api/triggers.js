@@ -89,6 +89,36 @@ async function deleteTriggers(triggerIds) {
 }
 
 /**
+ * Get triggers by single host ID
+ * @param {string} hostId - Single host ID
+ * @param {Object} additionalOptions - Additional options for the query
+ * @returns {Promise<Array>} Array of triggers for the specified host
+ */
+async function getTriggersByHost(hostId, additionalOptions = {}) {
+    if (!hostId) {
+        throw new Error("getTriggersByHost expects a host ID.");
+    }
+
+    try {
+        logger.debug(`${config.logging.prefix} Getting triggers for host: ${hostId}`);
+        
+        const options = {
+            output: ['triggerid', 'description', 'expression', 'priority', 'status', 'value', 'lastchange'],
+            hostids: [hostId],
+            selectHosts: ['hostid', 'host', 'name'],
+            selectItems: ['itemid', 'name', 'key_'],
+            selectLastEvent: ['eventid', 'clock', 'acknowledged'],
+            ...additionalOptions
+        };
+        
+        return await request('trigger.get', options);
+    } catch (error) {
+        logger.error(`${config.logging.prefix} Failed to get triggers by host:`, error.message);
+        throw new Error(`Failed to retrieve triggers by host: ${error.message}`);
+    }
+}
+
+/**
  * Get triggers by host IDs
  * @param {Array<string>} hostIds - Array of host IDs
  * @param {Object} additionalOptions - Additional options for the query
@@ -328,6 +358,7 @@ module.exports = {
     createTrigger,
     updateTrigger,
     deleteTriggers,
+    getTriggersByHost,
     getTriggersByHosts,
     getTriggersByPriority,
     getActiveTriggers,

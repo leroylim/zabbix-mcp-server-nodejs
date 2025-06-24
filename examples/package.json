@@ -1,22 +1,24 @@
 {
-  "name": "upguard-mcp-examples",
+  "name": "zabbix-mcp-examples",
   "version": "1.0.0",
-  "description": "Example clients for the UpGuard CyberRisk MCP Server",
+  "description": "Example clients for the Zabbix MCP Server",
   "main": "mcp-client-example.js",
   "scripts": {
-    "demo": "node mcp-client-example.js",
-    "install-deps": "npm install @modelcontextprotocol/sdk"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^0.5.0"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "example": "node mcp-client-example.js",
+    "integration": "node integration-test.js",
+    "http": "node http-client.js"
   },
   "keywords": [
-    "upguard",
     "mcp",
-    "cybersecurity",
-    "risk-assessment",
-    "api-client"
+    "zabbix",
+    "monitoring",
+    "model-context-protocol",
+    "api"
   ],
-  "author": "UpGuard MCP Server",
-  "license": "MIT"
+  "author": "Zabbix MCP Server",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
 } 

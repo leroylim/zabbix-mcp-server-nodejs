@@ -212,6 +212,60 @@ async function getUsersByType(userTypes, additionalOptions = {}) {
 }
 
 /**
+ * Get users by role (based on user groups and permissions)
+ * @param {string|Array<string>} roleNames - Role name(s) or user group name(s)
+ * @param {Object} additionalOptions - Additional options for the query
+ * @returns {Promise<Array>} Array of users with specified roles
+ */
+async function getUsersByRole(roleNames, additionalOptions = {}) {
+    const roles = Array.isArray(roleNames) ? roleNames : [roleNames];
+    
+    try {
+        logger.debug(`${config.logging.prefix} Getting users by roles: ${roles.join(', ')}`);
+        
+        // First, get user groups that match the role names
+        const userGroups = await request('usergroup.get', {
+            output: ['usrgrpid', 'name'],
+            search: {
+                name: roles
+            },
+            searchWildcardsEnabled: true
+        });
+        
+        if (userGroups.length === 0) {
+            logger.warn(`${config.logging.prefix} No user groups found matching roles: ${roles.join(', ')}`);
+            return [];
+        }
+        
+        const groupIds = userGroups.map(group => group.usrgrpid);
+        
+        // Get users in these groups
+        const options = {
+            output: ['userid', 'username', 'name', 'surname', 'type', 'autologin', 'autologout'],
+            usrgrpids: groupIds,
+            selectUsrgrps: ['usrgrpid', 'name', 'gui_access', 'users_status'],
+            selectMedias: ['mediatypeid', 'sendto', 'active'],
+            ...additionalOptions
+        };
+        
+        const users = await request('user.get', options);
+        
+        // Enhance with role information
+        return users.map(user => ({
+            ...user,
+            roles: user.usrgrps ? user.usrgrps.map(group => group.name) : [],
+            matchedRoles: user.usrgrps ? user.usrgrps.filter(group => 
+                roles.some(role => group.name.toLowerCase().includes(role.toLowerCase()))
+            ).map(group => group.name) : []
+        }));
+        
+    } catch (error) {
+        logger.error(`${config.logging.prefix} Failed to get users by role:`, error.message);
+        throw new Error(`Failed to retrieve users by role: ${error.message}`);
+    }
+}
+
+/**
  * Enable users
  * @param {Array<string>} userIds - Array of user IDs to enable
  * @returns {Promise<Object>} Update result
@@ -467,6 +521,7 @@ module.exports = {
     getUsersByGroups,
     getActiveUsers,
     getUsersByType,
+    getUsersByRole,
     enableUsers,
     disableUsers,
     getUserGroups,

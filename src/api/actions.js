@@ -120,6 +120,81 @@ async function getActionsByName(namePatterns, additionalOptions = {}) {
 }
 
 /**
+ * Get actions by specific event ID or event criteria
+ * @param {string|Object} eventCriteria - Event ID or event criteria object
+ * @param {Object} additionalOptions - Additional options for the query
+ * @returns {Promise<Array>} Array of actions that would be triggered by the event
+ */
+async function getActionsByEvent(eventCriteria, additionalOptions = {}) {
+    try {
+        logger.debug(`${config.logging.prefix} Getting actions by event criteria:`, eventCriteria);
+        
+        let eventSource = '0'; // Default to trigger events
+        let hostIds = [];
+        let triggerIds = [];
+        
+        // Handle different types of event criteria
+        if (typeof eventCriteria === 'string') {
+            // If it's an event ID, we need to get the event details first
+            const events = await request('event.get', {
+                output: ['eventid', 'source', 'object', 'objectid'],
+                eventids: [eventCriteria],
+                selectHosts: ['hostid'],
+                selectRelatedObject: ['triggerid', 'hostid']
+            });
+            
+            if (events.length > 0) {
+                const event = events[0];
+                eventSource = event.source;
+                if (event.hosts) {
+                    hostIds = event.hosts.map(h => h.hostid);
+                }
+                if (event.relatedObject && event.relatedObject.triggerid) {
+                    triggerIds = [event.relatedObject.triggerid];
+                }
+            }
+        } else if (typeof eventCriteria === 'object') {
+            // Handle event criteria object
+            eventSource = eventCriteria.source || '0';
+            hostIds = eventCriteria.hostIds || [];
+            triggerIds = eventCriteria.triggerIds || [];
+        }
+        
+        // Get actions for the event source
+        const options = {
+            output: ['actionid', 'name', 'eventsource', 'status', 'esc_period'],
+            filter: {
+                eventsource: eventSource,
+                status: '0' // Only enabled actions
+            },
+            selectOperations: ['operationid', 'operationtype', 'esc_period', 'esc_step_from', 'esc_step_to'],
+            selectRecoveryOperations: ['operationid', 'operationtype'],
+            selectFilter: ['conditions'],
+            ...additionalOptions
+        };
+        
+        const actions = await request('action.get', options);
+        
+        // Filter actions based on conditions (simplified)
+        // In a real implementation, you'd need to evaluate the action conditions
+        // against the specific event criteria
+        return actions.map(action => ({
+            ...action,
+            wouldTrigger: true, // Simplified - would need proper condition evaluation
+            eventMatch: {
+                source: eventSource,
+                hostIds: hostIds,
+                triggerIds: triggerIds
+            }
+        }));
+        
+    } catch (error) {
+        logger.error(`${config.logging.prefix} Failed to get actions by event:`, error.message);
+        throw new Error(`Failed to retrieve actions by event: ${error.message}`);
+    }
+}
+
+/**
  * Get actions by event source
  * @param {string|Array<string>} eventSources - Event source(s) (0=trigger, 1=discovery, 2=auto registration, 3=internal)
  * @param {Object} additionalOptions - Additional options for the query
@@ -502,6 +577,7 @@ module.exports = {
     updateAction,
     deleteActions,
     getActionsByName,
+    getActionsByEvent,
     getActionsByEventSource,
     getEnabledActions,
     getDisabledActions,

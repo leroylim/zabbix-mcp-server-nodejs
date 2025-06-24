@@ -1,23 +1,51 @@
 # 🚀 Zabbix MCP Server - Examples & Usage Guide
 
-This document provides practical examples and usage patterns for the Zabbix MCP Server, demonstrating how to effectively use all 19 tool categories and 90+ individual tools.
+This document provides practical examples and usage patterns for the Zabbix MCP Server, demonstrating how to effectively use all 19 tool categories and 90+ individual tools with **modern authentication** and **clean interface**.
 
 ## 🎯 Quick Start Examples
 
-### Basic Authentication
+### Modern Authentication Setup
+
+#### **Option 1: API Token (Recommended)**
+```env
+ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php
+ZABBIX_API_TOKEN=your_api_token_here
+```
+
+#### **Option 2: Username/Password**
+```env
+ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php
+ZABBIX_USERNAME=Admin
+ZABBIX_PASSWORD=your_password
+```
+
+### Basic API Usage
 
 ```javascript
-// Login to Zabbix server
-await zabbix_login({
-  username: "admin",
-  password: "zabbix"
-});
+const { request, getVersion, checkConnection } = require('./src/api/zabbix-client');
 
-// Get API information
+// Check connection and get version
+const connected = await checkConnection();
+console.log(`Connected: ${connected}`);
+
+const version = await getVersion();
+console.log(`Zabbix API Version: ${version}`);
+
+// Authentication is automatic based on environment variables
+// No manual login/logout required with API tokens
+```
+
+### MCP Tool Usage
+
+```javascript
+// Using MCP tools (automatic authentication)
 await zabbix_get_api_info();
 
-// Logout when done
-await zabbix_logout();
+// Direct API calls using modern interface
+const hosts = await request('host.get', {
+    output: ['hostid', 'host', 'name'],
+    selectInterfaces: ['interfaceid', 'ip']
+});
 ```
 
 ### Host Management Workflow

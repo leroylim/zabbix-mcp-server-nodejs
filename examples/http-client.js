@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Example HTTP Client for UpGuard CyberRisk MCP Server
+ * Example HTTP Client for Zabbix MCP Server
  * 
  * This demonstrates how to connect to the MCP server using HTTP Streamable transport.
  * 
@@ -19,7 +19,7 @@ async function testHttpClient() {
     try {
         // Create client
         const client = new Client({
-            name: 'upguard-test-client',
+            name: 'zabbix-test-client',
             version: '1.0.0'
         });
 
@@ -36,9 +36,12 @@ async function testHttpClient() {
         console.log('📋 Listing available tools...');
         const tools = await client.listTools();
         console.log(`Found ${tools.tools.length} tools:`);
-        tools.tools.forEach(tool => {
+        tools.tools.slice(0, 10).forEach(tool => {
             console.log(`  - ${tool.name}: ${tool.description}`);
         });
+        if (tools.tools.length > 10) {
+            console.log(`  ... and ${tools.tools.length - 10} more tools`);
+        }
         console.log();
 
         // Test listing prompts
@@ -50,17 +53,35 @@ async function testHttpClient() {
         });
         console.log();
 
-        // Test a simple tool call
-        console.log('🔧 Testing tool call: upguard_get_account_info...');
+        // Test API info call
+        console.log('🔧 Testing tool call: zabbix_get_api_info...');
         try {
             const result = await client.callTool({
-                name: 'upguard_get_account_info',
+                name: 'zabbix_get_api_info',
                 arguments: {}
             });
             console.log('✅ Tool call successful!');
             console.log('Response:', JSON.stringify(result, null, 2));
         } catch (error) {
-            console.log('⚠️ Tool call failed (this might be expected if API key is not configured):');
+            console.log('⚠️ Tool call failed (this might be expected if Zabbix credentials are not configured):');
+            console.log(`   ${error.message}`);
+        }
+        console.log();
+
+        // Test getting hosts
+        console.log('🔧 Testing tool call: zabbix_get_hosts...');
+        try {
+            const result = await client.callTool({
+                name: 'zabbix_get_hosts',
+                arguments: {
+                    output: ['hostid', 'host', 'name'],
+                    limit: 3
+                }
+            });
+            console.log('✅ Hosts call successful!');
+            console.log('Response:', JSON.stringify(result, null, 2));
+        } catch (error) {
+            console.log('⚠️ Hosts call failed:');
             console.log(`   ${error.message}`);
         }
         console.log();
@@ -96,8 +117,8 @@ async function checkServerHealth() {
 
 // Main function
 async function main() {
-    console.log('UpGuard CyberRisk MCP Server - HTTP Client Test\n');
-    console.log('============================================\n');
+    console.log('Zabbix MCP Server - HTTP Client Test\n');
+    console.log('====================================\n');
 
     // Check if server is running
     const serverHealthy = await checkServerHealth();

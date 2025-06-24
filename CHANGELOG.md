@@ -5,6 +5,64 @@ All notable changes to the Zabbix MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2024-12-24
+
+### 🔐 Authentication Modernization & Clean Interface
+
+This release introduces **modern authentication methods** and a **clean, professional API interface** without legacy baggage.
+
+### Added
+- **🎫 API Token Authentication (Zabbix 5.4+)**:
+  - Modern, secure authentication using API tokens
+  - No login/logout required (direct token usage)
+  - Easy token revocation and management
+  - Audit-friendly token usage tracking
+  - Automatic authentication method detection
+- **🧹 Clean Modern Interface**:
+  - Professional API with 5 clean methods only
+  - No legacy methods or backward compatibility baggage
+  - Unified client architecture (`src/api/zabbix-client.js`)
+  - Smart authentication detection and fallback
+- **📚 Enhanced Documentation**:
+  - Updated README.md with modern authentication examples
+  - Comprehensive AUTHENTICATION_GUIDE.md
+  - Updated EXAMPLES.md with clean interface usage
+  - New Quick Start guide with both auth methods
+  - Complete migration documentation
+
+### Changed
+- **Enhanced Configuration**: Smart authentication method detection
+- **Unified Client**: Single `zabbix-client.js` instead of dual clients
+- **Environment Variables**: Support for both `ZABBIX_API_TOKEN` and traditional credentials
+- **Interface Simplification**: 5 methods only (getClient, request, checkConnection, disconnect, getVersion)
+- **Authentication Flow**: Automatic based on environment variables
+
+### Removed
+- **Legacy Client**: Removed `src/api/client.js` completely
+- **Legacy Methods**: Removed all backward compatibility methods (zabbixRequest, ensureLogin, login, logout, getApiVersion)
+- **Code Reduction**: 40% reduction in client code (352→210 lines)
+
+### Security
+- **Enhanced Security**: API token support for production environments
+- **Credential Management**: Better separation of authentication methods
+- **Token Security**: Support for long-lived, revocable API tokens
+
+### Testing
+- **Authentication Testing**: New test scripts for both auth methods
+- **Clean Interface Testing**: Verification of legacy method removal
+- **Integration Testing**: Complete authentication flow validation
+
+### Documentation
+- **Complete Update**: All documentation reflects modern authentication
+- **Migration Guide**: Clear instructions for upgrading
+- **Best Practices**: Security recommendations for each auth method
+- **Troubleshooting**: Common issues and solutions
+
+### Performance
+- **Code Efficiency**: 40% reduction in authentication code
+- **Smart Detection**: Automatic authentication method selection
+- **Professional Interface**: Clean, consistent API methods
+
 ## [2.0.0] - 2024-12-19
 
 ### 🚀 Major Release - Complete Zabbix Integration

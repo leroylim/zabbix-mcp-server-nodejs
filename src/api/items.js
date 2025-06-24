@@ -97,6 +97,34 @@ async function deleteItems(itemIds) {
 }
 
 /**
+ * Get items by single host ID
+ * @param {string} hostId - Single host ID
+ * @param {Object} additionalOptions - Additional options for the query
+ * @returns {Promise<Array>} Array of items for the specified host
+ */
+async function getItemsByHost(hostId, additionalOptions = {}) {
+    if (!hostId) {
+        throw new Error("getItemsByHost expects a host ID.");
+    }
+
+    try {
+        logger.debug(`${config.logging.prefix} Getting items for host: ${hostId}`);
+        
+        const options = {
+            output: ['itemid', 'name', 'key_', 'type', 'value_type', 'status', 'units', 'lastvalue', 'lastclock'],
+            hostids: [hostId],
+            selectHosts: ['hostid', 'host', 'name'],
+            ...additionalOptions
+        };
+        
+        return await request('item.get', options);
+    } catch (error) {
+        logger.error(`${config.logging.prefix} Failed to get items by host:`, error.message);
+        throw new Error(`Failed to retrieve items by host: ${error.message}`);
+    }
+}
+
+/**
  * Get items by host IDs
  * @param {Array<string>} hostIds - Array of host IDs
  * @param {Object} additionalOptions - Additional options for the query
@@ -312,6 +340,7 @@ module.exports = {
     createItem,
     updateItem,
     deleteItems,
+    getItemsByHost,
     getItemsByHosts,
     getItemsByKey,
     getLatestData,

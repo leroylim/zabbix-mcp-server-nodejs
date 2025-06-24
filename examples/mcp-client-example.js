@@ -1,294 +1,277 @@
-#!/usr/bin/env node
-
 /**
- * UpGuard CyberRisk MCP Client Example
+ * Zabbix MCP Client Example
  * 
- * This example demonstrates how to connect to and use the UpGuard MCP server
- * programmatically using the MCP SDK.
- * 
- * Prerequisites:
- * 1. Install MCP SDK: npm install @modelcontextprotocol/sdk
- * 2. Set environment variables or update the config below
- * 3. Ensure the MCP server is working: node src/index.js
+ * This example demonstrates how to connect to and use the Zabbix MCP server
+ * for comprehensive monitoring, alerting, and infrastructure management.
  */
 
 const { Client } = require('@modelcontextprotocol/sdk/client/index.js');
 const { StdioClientTransport } = require('@modelcontextprotocol/sdk/client/stdio.js');
-const path = require('path');
 
 // Configuration
 const CONFIG = {
-    // Path to the MCP server (adjust as needed)
-    serverPath: path.join(__dirname, '..', 'src', 'index.js'),
+    // API Token Authentication (Recommended)
+    apiUrl: process.env.ZABBIX_API_URL || 'https://your-zabbix-server/api_jsonrpc.php',
+    apiToken: process.env.ZABBIX_API_TOKEN || 'your_api_token_here',
     
-    // API credentials (set these environment variables or update directly)
-    apiKey: process.env.UPGUARD_API_KEY || 'your_api_key_here',
-    apiSecret: process.env.UPGUARD_API_SECRET || 'your_api_secret_here',
-    baseUrl: process.env.UPGUARD_BASE_URL || 'https://cyber-risk.upguard.com/api/public',
+    // Username/Password Authentication (Alternative)
+    username: process.env.ZABBIX_USERNAME || 'Admin',
+    password: process.env.ZABBIX_PASSWORD || 'your_password',
     
-    // Test hostname for examples
-    testHostname: 'microsoft.com'
+    // Server configuration
+    serverPath: process.env.ZABBIX_MCP_SERVER_PATH || '../src/index.js',
+    logLevel: process.env.LOG_LEVEL || 'info'
 };
 
-async function createUpGuardClient() {
-    console.log('🔌 Connecting to UpGuard MCP Server...');
+/**
+ * Create and connect to Zabbix MCP Server
+ */
+async function createZabbixClient() {
+    console.log('🔌 Connecting to Zabbix MCP Server...');
     
+    // Create transport
     const transport = new StdioClientTransport({
         command: 'node',
         args: [CONFIG.serverPath],
         env: {
-            UPGUARD_API_KEY: CONFIG.apiKey,
-            UPGUARD_API_SECRET: CONFIG.apiSecret,
-            UPGUARD_BASE_URL: CONFIG.baseUrl
+            // Use API token if available, otherwise username/password
+            ZABBIX_API_URL: CONFIG.apiUrl,
+            ...(CONFIG.apiToken !== 'your_api_token_here' ? {
+                ZABBIX_API_TOKEN: CONFIG.apiToken
+            } : {
+                ZABBIX_USERNAME: CONFIG.username,
+                ZABBIX_PASSWORD: CONFIG.password
+            }),
+            LOG_LEVEL: CONFIG.logLevel
         }
     });
 
+    // Create client
     const client = new Client({
-        name: "upguard-example-client",
+        name: "zabbix-example-client",
         version: "1.0.0"
     }, {
         capabilities: {}
     });
 
+    // Connect
     await client.connect(transport);
-    console.log('✅ Connected to UpGuard MCP Server');
+    console.log('✅ Connected to Zabbix MCP Server');
+    
     return client;
 }
 
-async function listAvailableTools(client) {
-    console.log('\n📋 Listing Available Tools...');
-    
-    const tools = await client.listTools();
-    console.log(`Found ${tools.tools.length} tools:`);
-    
-    // Group tools by category
-    const categories = {};
-    tools.tools.forEach(tool => {
-        const category = tool.name.split('_')[1] || 'other';
-        if (!categories[category]) categories[category] = [];
-        categories[category].push(tool.name);
-    });
-    
-    Object.entries(categories).forEach(([category, toolNames]) => {
-        console.log(`\n  ${category.toUpperCase()}:`);
-        toolNames.forEach(name => console.log(`    - ${name}`));
-    });
-}
-
-async function demonstrateRiskAssessment(client) {
-    console.log(`\n🔍 Risk Assessment Demo for ${CONFIG.testHostname}...`);
+/**
+ * Example: Get Zabbix API Information
+ */
+async function getApiInfo(client) {
+    console.log('\n🔍 Getting Zabbix API Information...');
     
     try {
-        // Get vendor risks
-        console.log('  📊 Getting vendor risks...');
-        const risks = await client.callTool('upguard_get_vendor_risks', {
-            primary_hostname: CONFIG.testHostname
-        });
-        
-        const riskData = JSON.parse(risks.content[0].text);
-        console.log(`  ✅ Found ${riskData.risks?.length || 0} risks`);
-        
-        if (riskData.risks && riskData.risks.length > 0) {
-            console.log('  Top 3 risks:');
-            riskData.risks.slice(0, 3).forEach((risk, i) => {
-                console.log(`    ${i + 1}. ${risk.risk_name} (Score: ${risk.score})`);
-            });
-        }
-        
+        const result = await client.callTool('zabbix_get_api_info', {});
+        console.log('API Version:', result.content[0].text);
     } catch (error) {
-        console.log(`  ❌ Error: ${error.message}`);
+        console.error('❌ Error getting API info:', error.message);
     }
 }
 
-async function demonstrateVendorManagement(client) {
-    console.log('\n👥 Vendor Management Demo...');
+/**
+ * Example: Monitor Hosts and Problems
+ */
+async function monitorHosts(client) {
+    console.log('\n🖥️ Getting Host Information...');
     
     try {
-        // List monitored vendors
-        console.log('  📋 Getting monitored vendors...');
-        const vendors = await client.callTool('upguard_list_monitored_vendors', {
-            page_size: 5,
-            include_risks: true
+        // Get all hosts
+        const hosts = await client.callTool('zabbix_get_hosts', {
+            output: ['hostid', 'host', 'name', 'status'],
+            selectInterfaces: ['interfaceid', 'ip', 'port'],
+            selectGroups: ['groupid', 'name'],
+            limit: 10
         });
         
-        const vendorData = JSON.parse(vendors.content[0].text);
-        console.log(`  ✅ Found ${vendorData.vendors?.length || 0} vendors (showing first 5)`);
+        console.log(`Found ${hosts.content[0].text.length || 0} hosts`);
         
-        if (vendorData.vendors && vendorData.vendors.length > 0) {
-            vendorData.vendors.forEach((vendor, i) => {
-                console.log(`    ${i + 1}. ${vendor.primary_hostname} (Score: ${vendor.score || 'N/A'})`);
-            });
-        }
+        // Get current problems
+        const problems = await client.callTool('zabbix_get_problems', {
+            output: 'extend',
+            selectTags: 'extend',
+            recent: true,
+            limit: 5
+        });
+        
+        console.log(`Current problems: ${problems.content[0].text.length || 0}`);
         
     } catch (error) {
-        console.log(`  ❌ Error: ${error.message}`);
+        console.error('❌ Error monitoring hosts:', error.message);
     }
 }
 
-async function demonstrateVulnerabilityTracking(client) {
-    console.log(`\n🛡️ Vulnerability Tracking Demo for ${CONFIG.testHostname}...`);
+/**
+ * Example: Manage Triggers and Alerts
+ */
+async function manageTriggers(client) {
+    console.log('\n⚠️ Managing Triggers...');
     
     try {
-        // Get vendor vulnerabilities
-        console.log('  🔍 Getting vendor vulnerabilities...');
-        const vulnerabilities = await client.callTool('upguard_get_vendor_vulnerabilities', {
-            primary_hostname: CONFIG.testHostname,
-            page_size: 5
+        // Get triggers with high priority
+        const triggers = await client.callTool('zabbix_get_triggers', {
+            output: 'extend',
+            selectHosts: ['hostid', 'host'],
+            filter: {
+                priority: [4, 5] // High and Disaster priorities
+            },
+            sortfield: 'priority',
+            sortorder: 'DESC',
+            limit: 10
         });
         
-        const vulnData = JSON.parse(vulnerabilities.content[0].text);
-        console.log(`  ✅ Found ${vulnData.vulnerabilities?.length || 0} vulnerabilities (showing first 5)`);
-        
-        if (vulnData.vulnerabilities && vulnData.vulnerabilities.length > 0) {
-            vulnData.vulnerabilities.forEach((vuln, i) => {
-                console.log(`    ${i + 1}. ${vuln.title || vuln.name} (Severity: ${vuln.severity || 'N/A'})`);
-            });
-        }
+        console.log(`High priority triggers: ${triggers.content[0].text.length || 0}`);
         
     } catch (error) {
-        console.log(`  ❌ Error: ${error.message}`);
+        console.error('❌ Error managing triggers:', error.message);
     }
 }
 
-async function demonstrateBreachMonitoring(client) {
-    console.log('\n🚨 Data Breach Monitoring Demo...');
+/**
+ * Example: Historical Data Analysis
+ */
+async function analyzeHistory(client) {
+    console.log('\n📈 Analyzing Historical Data...');
     
     try {
-        // List identity breaches
-        console.log('  📋 Getting recent identity breaches...');
-        const breaches = await client.callTool('upguard_list_identity_breaches', {
-            page_size: 3
+        // Get items for analysis
+        const items = await client.callTool('zabbix_get_items', {
+            output: ['itemid', 'name', 'key_', 'value_type'],
+            selectHosts: ['hostid', 'host'],
+            filter: {
+                status: 0 // Active items only
+            },
+            limit: 5
         });
         
-        const breachData = JSON.parse(breaches.content[0].text);
-        console.log(`  ✅ Found ${breachData.breaches?.length || 0} breaches (showing first 3)`);
+        console.log(`Active items for analysis: ${items.content[0].text.length || 0}`);
         
-        if (breachData.breaches && breachData.breaches.length > 0) {
-            breachData.breaches.forEach((breach, i) => {
-                console.log(`    ${i + 1}. ${breach.title} (${breach.date || 'Date unknown'})`);
-            });
-        }
+        // Get recent trends
+        const trends = await client.callTool('zabbix_get_trends', {
+            itemids: [], // Would use actual item IDs from above
+            time_from: Math.floor(Date.now() / 1000) - 86400, // Last 24 hours
+            limit: 100
+        });
+        
+        console.log('Historical trends retrieved');
         
     } catch (error) {
-        console.log(`  ❌ Error: ${error.message}`);
+        console.error('❌ Error analyzing history:', error.message);
     }
 }
 
-async function demonstrateAssetInventory(client) {
-    console.log('\n📦 Asset Inventory Demo...');
+/**
+ * Example: User and Group Management
+ */
+async function manageUsers(client) {
+    console.log('\n👤 Managing Users and Groups...');
     
     try {
-        // List domains
-        console.log('  🌐 Getting domains...');
-        const domains = await client.callTool('upguard_list_domains', {
-            page_size: 3
+        // Get user groups
+        const userGroups = await client.callTool('zabbix_get_usergroups', {
+            output: 'extend',
+            selectUsers: ['userid', 'username'],
+            status: 0 // Enabled groups
         });
         
-        const domainData = JSON.parse(domains.content[0].text);
-        console.log(`  ✅ Found ${domainData.domains?.length || 0} domains (showing first 3)`);
+        console.log(`User groups: ${userGroups.content[0].text.length || 0}`);
         
-        if (domainData.domains && domainData.domains.length > 0) {
-            domainData.domains.forEach((domain, i) => {
-                console.log(`    ${i + 1}. ${domain.hostname} (Score: ${domain.score || 'N/A'})`);
-            });
-        }
-        
-        // List IP addresses
-        console.log('  🔢 Getting IP addresses...');
-        const ips = await client.callTool('upguard_list_ips', {
-            page_size: 3
+        // Get users
+        const users = await client.callTool('zabbix_get_users', {
+            output: ['userid', 'username', 'name', 'surname'],
+            selectUsrgrps: ['usrgrpid', 'name'],
+            getAccess: true
         });
         
-        const ipData = JSON.parse(ips.content[0].text);
-        console.log(`  ✅ Found ${ipData.ips?.length || 0} IPs (showing first 3)`);
-        
-        if (ipData.ips && ipData.ips.length > 0) {
-            ipData.ips.forEach((ip, i) => {
-                console.log(`    ${i + 1}. ${ip.ip} (Score: ${ip.score || 'N/A'})`);
-            });
-        }
+        console.log(`Users: ${users.content[0].text.length || 0}`);
         
     } catch (error) {
-        console.log(`  ❌ Error: ${error.message}`);
+        console.error('❌ Error managing users:', error.message);
     }
 }
 
+/**
+ * Main demonstration function
+ */
 async function main() {
-    console.log('🚀 UpGuard CyberRisk MCP Client Example');
-    console.log('=====================================');
-    
-    // Validate configuration
-    if (CONFIG.apiKey === 'your_api_key_here' || CONFIG.apiSecret === 'your_api_secret_here') {
-        console.log('❌ Please set your UpGuard API credentials in environment variables:');
-        console.log('   export UPGUARD_API_KEY="your_actual_api_key"');
-        console.log('   export UPGUARD_API_SECRET="your_actual_api_secret"');
-        console.log('\nOr update the CONFIG object in this script.');
-        process.exit(1);
-    }
-    
     let client;
     
+    console.log('🚀 Zabbix MCP Server Client Example');
+    console.log('=====================================\n');
+    
+    // Check configuration
+    if (CONFIG.apiToken === 'your_api_token_here' && CONFIG.password === 'your_password') {
+        console.log('❌ Please set your Zabbix credentials in environment variables:');
+        console.log('   For API Token: export ZABBIX_API_TOKEN="your_actual_token"');
+        console.log('   For Username/Password: export ZABBIX_USERNAME="Admin" ZABBIX_PASSWORD="your_password"');
+        console.log('   And: export ZABBIX_API_URL="https://your-zabbix-server/api_jsonrpc.php"');
+        return;
+    }
+    
     try {
-        // Connect to MCP server
-        client = await createUpGuardClient();
+        // Connect to server
+        client = await createZabbixClient();
         
-        // Run demonstrations
-        await listAvailableTools(client);
-        await demonstrateRiskAssessment(client);
-        await demonstrateVendorManagement(client);
-        await demonstrateVulnerabilityTracking(client);
-        await demonstrateBreachMonitoring(client);
-        await demonstrateAssetInventory(client);
+        // Run examples
+        await getApiInfo(client);
+        await monitorHosts(client);
+        await manageTriggers(client);
+        await analyzeHistory(client);
+        await manageUsers(client);
         
-        console.log('\n🎉 Demo completed successfully!');
-        console.log('\nNext steps:');
-        console.log('1. Explore more tools using client.listTools()');
-        console.log('2. Check swagger-api-examples.md for comprehensive examples');
-        console.log('3. Build custom workflows for your security needs');
+        console.log('\n✅ All examples completed successfully!');
+        console.log('\n📚 Available Tools Categories:');
+        console.log('   🔐 Authentication (3 tools)');
+        console.log('   🖥️ Host Management (3 tools)');
+        console.log('   👥 Host Groups (4 tools)');
+        console.log('   📊 Items Management (5 tools)');
+        console.log('   ⚠️ Triggers Management (4 tools)');
+        console.log('   🚨 Problems Management (2 tools)');
+        console.log('   📈 History Tools (3 tools)');
+        console.log('   🔧 Maintenance Tools (4 tools)');
+        console.log('   👤 User Management (6 tools)');
+        console.log('   🗺️ Network Maps (4 tools)');
+        console.log('   📋 Templates (4 tools)');
+        console.log('   📡 Discovery (4 tools)');
+        console.log('   🎛️ Dashboards (3 tools)');
+        console.log('   🔗 Proxies (4 tools)');
+        console.log('   ⚙️ Configuration (3 tools)');
+        console.log('   📝 Scripts (4 tools)');
+        console.log('   🔔 Media & Notifications (4 tools)');
+        console.log('   🏢 Services (4 tools)');
+        console.log('   🎯 Actions & Alerts (4 tools)');
         
     } catch (error) {
-        console.error('❌ Demo failed:', error.message);
+        console.error('❌ Error in main execution:', error.message);
+        console.log('\n🔧 Troubleshooting tips:');
+        console.log('1. Verify your Zabbix server is accessible');
+        console.log('2. Check that your API token or credentials are valid');
+        console.log('3. Ensure your user has API access permissions');
+        console.log('4. Verify the Zabbix API URL is correct');
         
-        if (error.message.includes('ENOENT')) {
-            console.log('\n💡 Troubleshooting:');
-            console.log('1. Make sure Node.js is installed');
-            console.log('2. Check that the server path is correct');
-            console.log('3. Verify the MCP server works: node src/index.js');
-        } else if (error.message.includes('401') || error.message.includes('403')) {
-            console.log('\n💡 Troubleshooting:');
-            console.log('1. Verify your API credentials are correct');
-            console.log('2. Check that your UpGuard account has API access');
-            console.log('3. Ensure the API key has sufficient permissions');
-        }
-        
-        process.exit(1);
     } finally {
-        // Clean up
+        // Cleanup
         if (client) {
             try {
                 await client.close();
-                console.log('🔌 Disconnected from MCP server');
+                console.log('🔌 Disconnected from Zabbix MCP Server');
             } catch (error) {
-                // Ignore cleanup errors
+                console.error('❌ Error during cleanup:', error.message);
             }
         }
     }
 }
 
-// Handle graceful shutdown
-process.on('SIGINT', () => {
-    console.log('\n👋 Shutting down gracefully...');
-    process.exit(0);
-});
+// Export for use in other modules
+module.exports = { createZabbixClient, CONFIG };
 
-process.on('SIGTERM', () => {
-    console.log('\n👋 Shutting down gracefully...');
-    process.exit(0);
-});
-
-// Run the example
+// Run if called directly
 if (require.main === module) {
     main().catch(console.error);
-}
-
-module.exports = { createUpGuardClient, CONFIG }; 
+} 

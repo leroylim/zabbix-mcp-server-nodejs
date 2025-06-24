@@ -57,6 +57,45 @@ async function getMaps(options = {}) {
 }
 
 /**
+ * Get network maps specifically (alias for getMaps with network-specific enhancements)
+ * @param {Object} options - Network map retrieval options
+ * @returns {Promise<Array>} Array of network maps with enhanced network topology data
+ */
+async function getNetworkMaps(options = {}) {
+    const defaultOptions = {
+        output: 'extend',
+        selectElements: true,
+        selectLinks: true,
+        selectUsers: true,
+        selectUserGroups: true,
+        sortfield: ['name'],
+        sortorder: 'ASC'
+    };
+    
+    const params = { ...defaultOptions, ...options };
+    const maps = await request('map.get', params);
+    
+    // Enhance network maps with topology analysis
+    return maps.map(map => ({
+        ...map,
+        elementCount: map.selements ? map.selements.length : 0,
+        linkCount: map.links ? map.links.length : 0,
+        hasElements: map.selements && map.selements.length > 0,
+        hasLinks: map.links && map.links.length > 0,
+        isPublic: map.private === '0',
+        isPrivate: map.private === '1',
+        networkTopology: {
+            hosts: map.selements ? map.selements.filter(el => el.elementtype === '0').length : 0,
+            hostGroups: map.selements ? map.selements.filter(el => el.elementtype === '1').length : 0,
+            triggers: map.selements ? map.selements.filter(el => el.elementtype === '2').length : 0,
+            maps: map.selements ? map.selements.filter(el => el.elementtype === '3').length : 0,
+            images: map.selements ? map.selements.filter(el => el.elementtype === '4').length : 0
+        },
+        accessLevel: map.userid ? 'Owner' : 'Shared'
+    }));
+}
+
+/**
  * Get network maps by name pattern
  * @param {string} namePattern - Name pattern to search for
  * @param {Object} [options] - Additional search options
@@ -748,6 +787,7 @@ function getUserAccessDistribution(maps) {
 module.exports = {
     // Network Maps
     getMaps,
+    getNetworkMaps,
     getMapsByName,
     getMapsByUsers,
     getPublicMaps,

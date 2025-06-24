@@ -1,9 +1,11 @@
 # Zabbix MCP Server
 
-A comprehensive Model Context Protocol (MCP) server for integrating with Zabbix monitoring systems. This server provides complete Zabbix API functionality through a standardized interface, enabling seamless monitoring, alerting, and infrastructure management.
+A comprehensive Model Context Protocol (MCP) server for integrating with Zabbix monitoring systems. This server provides complete Zabbix API functionality through a standardized interface, enabling seamless monitoring, alerting, and infrastructure management with **modern authentication** and a **clean, professional interface**.
 
 ## 🚀 Features
 
+- **🔐 Modern Authentication** - API Token (Zabbix 5.4+) and Username/Password support
+- **🧹 Clean Interface** - Professional, modern API without legacy baggage
 - **90+ API Tools** across 19 categories for comprehensive monitoring management
 - **Complete Zabbix Integration** with all major API endpoints
 - **Enterprise-Grade Functionality** including maps, dashboards, proxies, and services
@@ -13,11 +15,46 @@ A comprehensive Model Context Protocol (MCP) server for integrating with Zabbix 
 
 ## 📊 Quick Stats
 
+- **🔑 Dual Authentication** - API Token (recommended) + Username/Password
 - **19 Tool Categories** covering all Zabbix functionality
 - **90+ Individual Tools** for granular control
 - **100% Type Safe** with Zod schema validation
 - **Modular Design** with API and tools layers
 - **Enterprise Features** including business services and SLA monitoring
+
+## 🔐 Authentication Methods
+
+### **🎫 API Token Authentication (Recommended)**
+
+**Best for**: Production environments, CI/CD, automated systems
+
+```env
+ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php
+ZABBIX_API_TOKEN=your_api_token_here
+```
+
+**Benefits:**
+- ✅ **More secure** (no password exposure)
+- ✅ **No login/logout** required (direct token usage)
+- ✅ **Easy revocation** (token management in Zabbix UI)
+- ✅ **Long-lived** (configurable expiration)
+- ✅ **Audit-friendly** (token usage tracking)
+
+### **🔐 Username/Password Authentication (Traditional)**
+
+**Best for**: Development, testing, legacy systems
+
+```env
+ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php
+ZABBIX_USERNAME=Admin
+ZABBIX_PASSWORD=your_password
+```
+
+**Features:**
+- ✅ **Session-based** authentication with auto-refresh
+- ✅ **Automatic login/logout** handling
+- ✅ **Compatible** with all Zabbix versions
+- ✅ **Familiar** authentication flow
 
 ## 🏗️ Tool Categories Overview
 
@@ -61,35 +98,311 @@ A comprehensive Model Context Protocol (MCP) server for integrating with Zabbix 
 - Node.js 18+
 - npm or yarn
 - Zabbix server with API access
-- Valid Zabbix user credentials
+- Valid Zabbix credentials (API token or username/password)
 
 ### Installation
 
 ```bash
 git clone <repository-url>
-cd zabbix-mcp-server-nodejs
+cd zabbix-mcp-server
 npm install
 ```
 
 ### Configuration
 
-Create a `.env` file with your Zabbix credentials:
+#### **Option 1: API Token Authentication (Recommended)**
+
+1. **Generate API token** in Zabbix UI: `Administration → General → Tokens → Create token`
+2. **Create `.env` file**:
 
 ```env
-ZABBIX_URL=https://your-zabbix-server.com/api_jsonrpc.php
-ZABBIX_USERNAME=your_username
+ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php
+ZABBIX_API_TOKEN=your_api_token_here
+```
+
+#### **Option 2: Username/Password Authentication**
+
+**Create `.env` file**:
+
+```env
+ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php
+ZABBIX_USERNAME=Admin
 ZABBIX_PASSWORD=your_password
 ```
 
 ### Running the Server
 
 ```bash
-# Start the MCP server
+# Start the MCP server (stdio mode)
 npm start
 
 # Or run directly
-node src/index.js --stdio
+node src/index.js
+
+# HTTP mode (for development)
+MCP_TRANSPORT_MODE=http npm start
 ```
+
+**Log output:**
+```
+[INFO] [Zabbix API Client] Using API token authentication (Zabbix 5.4+)
+[INFO] [Zabbix API Client] Connected to Zabbix API version: 6.0.0
+[INFO] MCP Server started successfully
+```
+
+## 🔌 MCP Configuration
+
+To use this server with Claude Desktop, Cursor IDE, or other MCP-compatible clients, you need to add it to your MCP configuration file.
+
+### For Claude Desktop (Windows/Mac/Linux)
+
+Add the following configuration to your `claude_desktop_config.json` file:
+
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **Mac**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+#### **API Token Authentication (Recommended)**
+```json
+{
+  "mcpServers": {
+    "zabbix-mcp": {
+      "command": "node",
+      "args": [
+        "/path/to/your/zabbix-mcp-server/src/index.js"
+      ],
+      "env": {
+        "ZABBIX_API_URL": "https://your-zabbix-server/api_jsonrpc.php",
+        "ZABBIX_API_TOKEN": "your_api_token_here"
+      }
+    }
+  }
+}
+```
+
+#### **Username/Password Authentication**
+```json
+{
+  "mcpServers": {
+    "zabbix-mcp": {
+      "command": "node",
+      "args": [
+        "/path/to/your/zabbix-mcp-server/src/index.js"
+      ],
+      "env": {
+        "ZABBIX_API_URL": "https://your-zabbix-server/api_jsonrpc.php",
+        "ZABBIX_USERNAME": "Admin",
+        "ZABBIX_PASSWORD": "your_password"
+      }
+    }
+  }
+}
+```
+
+### For Cursor IDE
+
+Add the following configuration to your `mcp.json` file in your Cursor settings directory:
+
+- **Windows**: `%APPDATA%\Cursor\User\mcp.json`
+- **Mac**: `~/Library/Application Support/Cursor/User/mcp.json`
+- **Linux**: `~/.config/Cursor/User/mcp.json`
+
+#### **API Token Authentication (Recommended)**
+```json
+{
+  "mcpServers": {
+    "zabbix-mcp": {
+      "command": "node",
+      "args": [
+        "/path/to/your/zabbix-mcp-server/src/index.js"
+      ],
+      "env": {
+        "ZABBIX_API_URL": "https://your-zabbix-server/api_jsonrpc.php",
+        "ZABBIX_API_TOKEN": "your_api_token_here"
+      }
+    }
+  }
+}
+```
+
+#### **Username/Password Authentication**
+```json
+{
+  "mcpServers": {
+    "zabbix-mcp": {
+      "command": "node",
+      "args": [
+        "/path/to/your/zabbix-mcp-server/src/index.js"
+      ],
+      "env": {
+        "ZABBIX_API_URL": "https://your-zabbix-server/api_jsonrpc.php",
+        "ZABBIX_USERNAME": "Admin",
+        "ZABBIX_PASSWORD": "your_password"
+      }
+    }
+  }
+}
+```
+
+### Configuration Notes
+
+- **Replace the path**: Update `/path/to/your/zabbix-mcp-server/src/index.js` with the actual path to your installation
+- **Replace credentials**: Update with your actual Zabbix server URL and credentials
+- **Server name**: You can change `zabbix-mcp` to any name you prefer
+- **Additional variables**: Add any other environment variables as needed (e.g., `LOG_LEVEL=debug`)
+
+### Getting Your Zabbix Credentials
+
+#### **For API Token Authentication (Recommended)**
+
+**Prerequisites:**
+- Zabbix server version 5.4 or higher
+- User account with appropriate permissions
+- Access to Zabbix web interface
+
+**Step-by-step instructions:**
+1. **Log in** to your Zabbix web interface
+2. **Navigate** to `Administration → General → Tokens`
+3. **Click** `Create token` button
+4. **Configure** your token:
+   - **Name**: `MCP Server Token` (or any descriptive name)
+   - **User**: Select the user account
+   - **Expires at**: Set expiration date (optional, recommended for security)
+   - **Description**: Optional description
+5. **Click** `Add` to create the token
+6. **Copy** the generated token (you won't be able to see it again)
+7. **Paste** the token into your MCP configuration file
+
+#### **For Username/Password Authentication**
+
+**Prerequisites:**
+- Zabbix server version 5.0 or higher
+- Valid user account with API access permissions
+
+**Required information:**
+- **ZABBIX_API_URL**: Your Zabbix server API endpoint (usually `https://your-server/api_jsonrpc.php`)
+- **ZABBIX_USERNAME**: Your Zabbix username (e.g., `Admin`)
+- **ZABBIX_PASSWORD**: Your Zabbix password
+
+### Testing Your Configuration
+
+You can verify your configuration works by testing it with curl:
+
+#### **API Token Test**
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "apiinfo.version",
+    "params": {},
+    "auth": "your_api_token_here",
+    "id": 1
+  }' \
+  https://your-zabbix-server/api_jsonrpc.php
+```
+
+#### **Username/Password Test**
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "user.login",
+    "params": {
+      "username": "Admin",
+      "password": "your_password"
+    },
+    "id": 1
+  }' \
+  https://your-zabbix-server/api_jsonrpc.php
+```
+
+### Security Notes
+
+- **Keep credentials secure** and don't share them publicly
+- **Use API tokens** in production environments for better security
+- **Set token expiration** dates for enhanced security
+- **Use HTTPS** for your Zabbix server to encrypt communication
+- **Limit user permissions** to only what's needed for monitoring
+- **Regularly rotate** API tokens and passwords
+
+### Restart Required
+
+After updating your MCP configuration, **restart Claude Desktop or your IDE** for the changes to take effect.
+
+### Troubleshooting MCP Configuration
+
+#### **Common Issues**
+
+1. **Server not appearing in client**
+   - Verify the path to `src/index.js` is correct
+   - Check that Node.js is installed and accessible
+   - Restart your MCP client
+
+2. **Authentication errors**
+   - Verify your Zabbix server URL is correct
+   - Check that your API token or credentials are valid
+   - Ensure your user has API access permissions
+
+3. **Connection timeouts**
+   - Check network connectivity to your Zabbix server
+   - Verify firewall settings allow the connection
+   - Test with curl commands above
+
+#### **Debug Mode**
+
+Add debug logging to troubleshoot issues:
+```json
+{
+  "mcpServers": {
+    "zabbix-mcp": {
+      "command": "node",
+      "args": ["/path/to/your/zabbix-mcp-server/src/index.js"],
+      "env": {
+        "ZABBIX_API_URL": "https://your-zabbix-server/api_jsonrpc.php",
+        "ZABBIX_API_TOKEN": "your_api_token_here",
+        "LOG_LEVEL": "debug"
+      }
+    }
+  }
+}
+```
+
+## 🔧 Modern API Interface
+
+The server provides a **clean, modern interface** for programmatic access:
+
+```javascript
+const { request, getVersion, checkConnection } = require('./src/api/zabbix-client');
+
+// Get API version
+const version = await getVersion();
+console.log(`Zabbix API Version: ${version}`);
+
+// Check connection
+const connected = await checkConnection();
+console.log(`Connected: ${connected}`);
+
+// Make API calls
+const hosts = await request('host.get', {
+    output: ['hostid', 'host', 'name'],
+    selectInterfaces: ['interfaceid', 'ip']
+});
+
+const problems = await request('problem.get', {
+    output: 'extend',
+    selectTags: 'extend',
+    recent: true
+});
+```
+
+**Available Methods:**
+- `getClient()` - Get authenticated client instance
+- `request(method, params)` - Make API calls
+- `checkConnection()` - Check connection status
+- `disconnect()` - Disconnect and cleanup
+- `getVersion()` - Get API version
 
 ## 📚 Comprehensive Tool Reference
 
@@ -99,6 +412,7 @@ node src/index.js --stdio
 Authenticate with Zabbix server and establish session
 - **Parameters**: `username`, `password`
 - **Returns**: Authentication token and session info
+- **Note**: Automatic with API token authentication
 
 #### `zabbix_logout`
 Terminate current Zabbix session
@@ -600,10 +914,10 @@ Get SLA data for services
 
 1. **Create API Module** (`src/api/newmodule.js`):
 ```javascript
-const { zabbixRequest } = require('./client');
+const { request } = require('./zabbix-client');
 
 async function getItems(params = {}) {
-    return await zabbixRequest('item.get', params);
+    return await request('item.get', params);
 }
 
 module.exports = { newModuleApi: { getItems } };
@@ -675,16 +989,31 @@ npm run test:coverage
 
 ### Environment Variables
 
+#### **API Token Authentication (Recommended)**
 ```env
 # Required
-ZABBIX_URL=https://your-zabbix-server.com/api_jsonrpc.php
-ZABBIX_USERNAME=your_username
+ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php
+ZABBIX_API_TOKEN=your_api_token_here
+
+# Optional
+LOG_LEVEL=info
+CACHE_TTL=300
+ZABBIX_REQUEST_TIMEOUT=120000
+MCP_TRANSPORT_MODE=stdio
+```
+
+#### **Username/Password Authentication**
+```env
+# Required
+ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php
+ZABBIX_USERNAME=Admin
 ZABBIX_PASSWORD=your_password
 
 # Optional
 LOG_LEVEL=info
 CACHE_TTL=300
-REQUEST_TIMEOUT=30000
+ZABBIX_REQUEST_TIMEOUT=120000
+MCP_TRANSPORT_MODE=stdio
 ```
 
 ### Advanced Configuration
@@ -716,11 +1045,18 @@ Create `config/zabbix.json`:
 # Build image
 docker build -t zabbix-mcp-server .
 
-# Run container
+# Run container (API Token)
 docker run -d \
   --name zabbix-mcp \
-  -e ZABBIX_URL=https://your-zabbix-server.com/api_jsonrpc.php \
-  -e ZABBIX_USERNAME=your_username \
+  -e ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php \
+  -e ZABBIX_API_TOKEN=your_api_token_here \
+  zabbix-mcp-server
+
+# Run container (Username/Password)
+docker run -d \
+  --name zabbix-mcp \
+  -e ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php \
+  -e ZABBIX_USERNAME=Admin \
   -e ZABBIX_PASSWORD=your_password \
   zabbix-mcp-server
 ```
@@ -733,9 +1069,14 @@ services:
   zabbix-mcp:
     build: .
     environment:
-      - ZABBIX_URL=https://your-zabbix-server.com/api_jsonrpc.php
-      - ZABBIX_USERNAME=your_username
-      - ZABBIX_PASSWORD=your_password
+      # API Token Authentication (Recommended)
+      - ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php
+      - ZABBIX_API_TOKEN=your_api_token_here
+      
+      # Or Username/Password Authentication
+      # - ZABBIX_API_URL=https://your-zabbix-server/api_jsonrpc.php
+      # - ZABBIX_USERNAME=Admin
+      # - ZABBIX_PASSWORD=your_password
     restart: unless-stopped
 ```
 
