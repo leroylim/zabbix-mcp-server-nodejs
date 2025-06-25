@@ -3,6 +3,63 @@ const api = require('../api');
 const { z } = require('zod');
 const { handleZabbixError } = require('../utils/errors');
 
+// ------------------------------------------------------------------
+// Correlation helper schemas (strict, API-accurate)
+// ------------------------------------------------------------------
+
+// Discriminated union for individual filter conditions
+const conditionSchema = z.discriminatedUnion('type', [
+  z.object({ // 0 – old event tag
+    type: z.literal(0),
+    tag: z.string().describe('Tag on the OLD event (e.g. "problem")'),
+    formulaid: z.string().optional().describe('Optional formula ID (A-Z) if you plan to reference this condition in a custom expression')
+  }).describe('Condition type 0: OLD event tag equals specified tag'),
+  z.object({ // 1 – new event tag
+    type: z.literal(1),
+    tag: z.string().describe('Tag on the NEW event (e.g. "problem")'),
+    formulaid: z.string().optional().describe('Optional formula ID (A-Z)')
+  }).describe('Condition type 1: NEW event tag equals specified tag'),
+  z.object({ // 2 – new event host group
+    type: z.literal(2),
+    operator: z.number().int().min(0).max(3).describe('Operator: 0 (equals), 1 (not equals), 2 (like), 3 (not like)'),
+    groupid: z.string().describe('Host group ID to compare the NEW event against'),
+    formulaid: z.string().optional().describe('Optional formula ID (A-Z)')
+  }).describe('Condition type 2: NEW event host group comparison'),
+  z.object({ // 3 – event tag pair
+    type: z.literal(3),
+    oldtag: z.string().describe('Tag on the OLD event'),
+    newtag: z.string().describe('Tag on the NEW event'),
+    operator: z.number().int().min(0).max(3).describe('Operator between tag names: 0 (=), 1 (!=), 2 (like), 3 (not like)').optional(),
+    formulaid: z.string().optional().describe('Optional formula ID (A-Z)')
+  }).describe('Condition type 3: Tag pair comparison between OLD and NEW events'),
+  z.object({ // 4 – old event tag value
+    type: z.literal(4),
+    operator: z.number().int().min(0).max(3).describe('Operator for value comparison: 0 (=), 1 (!=), 2 (like), 3 (not like)'),
+    tag: z.string().describe('Tag key on the OLD event'),
+    value: z.string().describe('Tag value to compare on the OLD event'),
+    formulaid: z.string().optional().describe('Optional formula ID (A-Z)')
+  }).describe('Condition type 4: OLD event tag VALUE comparison'),
+  z.object({ // 5 – new event tag value
+    type: z.literal(5),
+    operator: z.number().int().min(0).max(3).describe('Operator for value comparison: 0 (=), 1 (!=), 2 (like), 3 (not like)'),
+    tag: z.string().describe('Tag key on the NEW event'),
+    value: z.string().describe('Tag value to compare on the NEW event'),
+    formulaid: z.string().optional().describe('Optional formula ID (A-Z)')
+  }).describe('Condition type 5: NEW event tag VALUE comparison')
+]).describe('Correlation filter condition (types 0-5).')
+
+// Full filter schema
+const filterSchema = z.object({
+  evaltype: z.number().int().min(0).max(3).default(0).describe('Filter evaluation type: 0 (and/or), 1 (and), 2 (or), 3 (custom expression).'),
+  formula: z.string().optional().describe('Custom expression formula (required when evaltype = 3).'),
+  timewindow: z.number().int().positive().optional().describe('Time window in seconds; CLOSE OLD EVENTS will look this far back.'),
+  conditions: z.array(conditionSchema).min(1).describe('Array of filter conditions that must match.')
+}).superRefine((data, ctx) => {
+  if (data.evaltype === 3 && !data.formula) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'filter.formula is required when evaltype = 3' });
+  }
+});
+
 function registerTools(server) {
     // Get actions
     server.tool(
@@ -351,6 +408,72 @@ function registerTools(server) {
         }
     );
 
+    // --- Helper: runtime guard for correlation payloads ---
+    function validateCorrelationPayload(params, { isUpdate = false } = {}) {
+        const { filter, operations } = params || {};
+
+        // Basic presence checks
+        if (!filter || !Array.isArray(filter.conditions) || filter.conditions.length === 0) {
+            throw new Error('Correlation filter must contain a non-empty "conditions" array.');
+        }
+        if (!operations || !Array.isArray(operations) || operations.length === 0) {
+            throw new Error('Correlation must contain at least one operation.');
+        }
+
+        // evaltype / formula consistency (API requirement)
+        if (filter.evaltype === 3 && !filter.formula) {
+            throw new Error('filter.formula is required when evaltype = 3 (custom expression).');
+        }
+        if (filter.evaltype !== 3 && filter.formula) {
+            throw new Error('filter.formula must be omitted unless evaltype = 3.');
+        }
+
+        // timewindow allowed only on create
+        if (isUpdate && Object.prototype.hasOwnProperty.call(filter, 'timewindow')) {
+            throw new Error('filter.timewindow can only be set during correlation creation, not update.');
+        }
+
+        // Validate each filter condition against its type-specific allowed fields
+        filter.conditions.forEach((c, idx) => {
+            const fail = (msg) => {
+                throw new Error(`Condition #${idx + 1} (type ${c.type}): ${msg}`);
+            };
+
+            switch (c.type) {
+                case 0: // OLD event tag
+                case 1: // NEW event tag
+                    if (!('tag' in c)) fail('`tag` field is required.');
+                    if ('value' in c || 'operator' in c) fail('`value` or `operator` not allowed for type 0/1.');
+                    break;
+
+                case 2: // NEW event host group
+                    if (!('groupid' in c && 'operator' in c)) fail('`groupid` and `operator` required for type 2.');
+                    break;
+
+                case 3: // Tag pair comparison
+                    if (!('oldtag' in c && 'newtag' in c)) fail('`oldtag` and `newtag` required for type 3.');
+                    break;
+
+                case 4: // OLD tag value comparison
+                case 5: // NEW tag value comparison
+                    if (!('tag' in c && 'value' in c && 'operator' in c)) {
+                        fail('`tag`, `value`, and `operator` are required for type 4/5.');
+                    }
+                    break;
+
+                default:
+                    fail('Unsupported or unknown condition type.');
+            }
+        });
+
+        // Ensure operation.type is numeric (API rejects strings)
+        operations.forEach((op, idx) => {
+            if (typeof op.type !== 'number') {
+                throw new Error(`Operation #${idx + 1}: type must be a number, not a string.`);
+            }
+        });
+    }
+
     // Create correlation
     server.tool(
         'zabbix_create_correlation',
@@ -360,20 +483,7 @@ function registerTools(server) {
             description: z.string().optional().describe('Description of the correlation'),
             status: z.number().int().min(0).max(1).optional().default(0).describe('Status: 0 (enabled), 1 (disabled)'),
             
-            filter: z.object({
-                evaltype: z.number().int().min(0).max(3).optional().default(0).describe('Filter evaluation type'),
-                formula: z.string().optional().describe('Custom expression formula'),
-                conditions: z.array(z.object({
-                    type: z.number().int().min(0).max(5).describe('Condition type: 0 (old event tag), 1 (new event tag), 2 (new event host group), 3 (event tag pair), 4 (old event tag value), 5 (new event tag value)'),
-                    operator: z.number().int().min(0).max(3).describe('Condition operator: 0 (equals), 1 (not equals), 2 (like), 3 (not like)'),
-                    tag: z.string().optional().describe('Event tag name'),
-                    oldtag: z.string().optional().describe('Old event tag name'),
-                    newtag: z.string().optional().describe('New event tag name'),
-                    value: z.string().optional().describe('Tag value'),
-                    groupid: z.string().optional().describe('Host group ID'),
-                    formulaid: z.string().optional().describe('Formula ID')
-                })).min(1).describe('Array of filter conditions')
-            }).describe('Correlation filter'),
+            filter: filterSchema.describe('Correlation filter'),
             
             operations: z.array(z.object({
                 type: z.number().int().min(0).max(1).describe('Operation type: 0 (close old events), 1 (close new event)')
@@ -382,6 +492,9 @@ function registerTools(server) {
         async (args) => {
             try {
                 const params = { ...args };
+
+                // Strict runtime validation
+                validateCorrelationPayload(params);
                 
                 const result = await api.createCorrelation(params);
                 
@@ -411,20 +524,7 @@ function registerTools(server) {
             description: z.string().optional().describe('Description of the correlation'),
             status: z.number().int().min(0).max(1).optional().describe('Status: 0 (enabled), 1 (disabled)'),
             
-            filter: z.object({
-                evaltype: z.number().int().min(0).max(3).optional().describe('Filter evaluation type'),
-                formula: z.string().optional().describe('Custom expression formula'),
-                conditions: z.array(z.object({
-                    type: z.number().int().min(0).max(5).describe('Condition type: 0 (old event tag), 1 (new event tag), 2 (new event host group), 3 (event tag pair), 4 (old event tag value), 5 (new event tag value)'),
-                    operator: z.number().int().min(0).max(3).describe('Condition operator: 0 (equals), 1 (not equals), 2 (like), 3 (not like)'),
-                    tag: z.string().optional().describe('Event tag name'),
-                    oldtag: z.string().optional().describe('Old event tag name'),
-                    newtag: z.string().optional().describe('New event tag name'),
-                    value: z.string().optional().describe('Tag value'),
-                    groupid: z.string().optional().describe('Host group ID'),
-                    formulaid: z.string().optional().describe('Formula ID')
-                })).optional().describe('Array of filter conditions')
-            }).optional().describe('Correlation filter'),
+            filter: filterSchema.optional().describe('Correlation filter'),
             
             operations: z.array(z.object({
                 type: z.number().int().min(0).max(1).describe('Operation type: 0 (close old events), 1 (close new event)')
@@ -433,6 +533,8 @@ function registerTools(server) {
         async (args) => {
             try {
                 const params = { ...args };
+
+                validateCorrelationPayload(params, { isUpdate: true });
                 
                 const result = await api.updateCorrelation(params);
                 
