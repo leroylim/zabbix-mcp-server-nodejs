@@ -3,22 +3,60 @@ const { logger } = require('../utils/logger');
 const { z } = require('zod');
 const schemas = require('./schemas');
 
+// Media Type URL schema
+const mediaTypeUrlSchema = z.object({
+    name: z.string().describe("Media type defined URL name."),
+    url: z.string().describe("Media type defined URL value.")
+});
+
+// Problem Tag schema (for returned problem tags, different from filter tags)
+const problemTagSchema = z.object({
+    tag: z.string().describe("Problem tag name."),
+    value: z.string().describe("Problem tag value.")
+});
+
+// Complete Problem Object schema
+const problemObjectSchema = z.object({
+    eventid: z.string().describe("ID of the problem event."),
+    source: z.number().int().min(0).max(4).describe("Type of the problem event: 0 (event created by a trigger), 3 (internal event), 4 (event created on service status update)."),
+    object: z.number().int().min(0).max(6).describe("Type of object that is related to the problem event. Values depend on source: trigger events (0=trigger), internal events (0=trigger, 4=item, 5=LLD rule), service events (6=service)."),
+    objectid: z.string().describe("ID of the related object."),
+    clock: z.number().int().describe("Time when the problem event was created (Unix timestamp)."),
+    ns: z.number().int().min(0).max(999999999).describe("Nanoseconds when the problem event was created."),
+    r_eventid: z.string().optional().describe("ID of the recovery event."),
+    r_clock: z.number().int().optional().describe("Time when the recovery event was created (Unix timestamp)."),
+    r_ns: z.number().int().min(0).max(999999999).optional().describe("Nanoseconds when the recovery event was created."),
+    cause_eventid: z.string().optional().describe("ID of the cause event."),
+    correlationid: z.string().optional().describe("ID of the correlation rule if this event was recovered by a global correlation rule."),
+    userid: z.string().optional().describe("ID of the user that closed the problem (if the problem was closed manually)."),
+    name: z.string().describe("Resolved problem name."),
+    acknowledged: z.number().int().min(0).max(1).describe("Acknowledge state for problem: 0 (not acknowledged), 1 (acknowledged)."),
+    severity: z.number().int().min(0).max(5).describe("Problem current severity: 0 (not classified), 1 (information), 2 (warning), 3 (average), 4 (high), 5 (disaster)."),
+    suppressed: z.number().int().min(0).max(1).describe("Whether the problem is suppressed: 0 (problem is in normal state), 1 (problem is suppressed)."),
+    opdata: z.string().optional().describe("Operational data with expanded macros."),
+    urls: z.array(mediaTypeUrlSchema).optional().describe("Active media type URLs.")
+});
+
+// Tag filter schema for input parameters
+const tagFilterSchema = z.object({
+    tag: z.string().describe("Tag name."),
+    value: z.string().optional().describe("Tag value."),
+    operator: z.enum(['0', '1', '2', '3']).optional().describe("Tag operator: 0 (like), 1 (equal), 2 (not like), 3 (not equal).")
+});
+
 function registerTools(server) {
     // Tool: Get Problems
     server.tool(
         'zabbix_get_problems',
         'Retrieves current problems from Zabbix with filtering options.',
         {
+            eventids: z.array(z.string()).optional().describe("Array of event IDs to retrieve specific problems."),
             hostids: z.array(schemas.hostId).optional().describe("Array of host IDs to filter problems by."),
             groupids: z.array(schemas.groupId).optional().describe("Array of host group IDs to filter problems by."),
             objectids: z.array(z.string()).optional().describe("Array of object IDs (trigger IDs) to filter problems by."),
             severities: z.array(z.number().int().min(0).max(5)).optional().describe("Array of severity levels to filter by (0-5)."),
             evaltype: z.enum(['0', '2']).optional().describe("Evaluation type: 0 (AND/OR), 2 (OR)."),
-            tags: z.array(z.object({
-                tag: z.string().describe("Tag name."),
-                value: z.string().optional().describe("Tag value."),
-                operator: z.enum(['0', '1', '2', '3']).optional().describe("Tag operator: 0 (like), 1 (equal), 2 (not like), 3 (not equal).")
-            })).optional().describe("Array of tag filters."),
+            tags: z.array(tagFilterSchema).optional().describe("Array of tag filters."),
             recent: z.boolean().optional().default(true).describe("Show recent problems."),
             suppressed: z.boolean().optional().describe("Include suppressed problems."),
             acknowledged: z.enum(['0', '1']).optional().describe("Filter by acknowledgment: 0 (unacknowledged), 1 (acknowledged)."),
@@ -57,11 +95,7 @@ function registerTools(server) {
             acknowledged: z.enum(['0', '1']).optional().describe("Filter by acknowledgment: 0 (unacknowledged), 1 (acknowledged)."),
             severities: z.array(z.number().int().min(0).max(5)).optional().describe("Array of severity levels to filter by (0-5)."),
             evaltype: z.enum(['0', '2']).optional().describe("Evaluation type: 0 (AND/OR), 2 (OR)."),
-            tags: z.array(z.object({
-                tag: z.string().describe("Tag name."),
-                value: z.string().optional().describe("Tag value."),
-                operator: z.enum(['0', '1', '2', '3']).optional().describe("Tag operator.")
-            })).optional().describe("Array of tag filters."),
+            tags: z.array(tagFilterSchema).optional().describe("Array of tag filters."),
             time_from: schemas.unixTimestamp.optional().describe("Start time for event filtering."),
             time_till: schemas.unixTimestamp.optional().describe("End time for event filtering."),
             value: z.array(z.enum(['0', '1'])).optional().describe("Event values: 0 (OK), 1 (problem)."),
