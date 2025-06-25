@@ -86,22 +86,27 @@ function registerTools(server) {
             ack_shortdata: z.string().optional().describe('Update short message template'),
             ack_longdata: z.string().optional().describe('Update long message template'),
             
+            // Missing official properties from Zabbix API
+            notify_if_canceled: z.number().int().min(0).max(1).optional().default(1).describe('Notify if action operation is canceled: 0 (no), 1 (yes)'),
+            pause_suppressed: z.number().int().min(0).max(1).optional().default(1).describe('Pause operations during maintenance: 0 (no), 1 (yes)'),
+            actionid: z.string().optional().describe('Action ID (read-only, set by Zabbix)'),
+            
             // Filter conditions
             filter: z.object({
                 evaltype: z.number().int().min(0).max(3).optional().default(0).describe('Filter evaluation type: 0 (and/or), 1 (and), 2 (or), 3 (custom expression)'),
                 formula: z.string().optional().describe('Custom expression formula (when evaltype=3)'),
                 conditions: z.array(z.object({
-                    conditiontype: z.number().int().min(0).max(26).describe('Condition type (e.g., 1=host group, 2=host, 3=trigger, 4=trigger name, 5=trigger severity, etc.)'),
-                    operator: z.number().int().min(0).max(8).describe('Condition operator (0=equals, 1=not equals, 2=like, 3=not like, 4=in, 5=>=, 6=<=, 7=not in, 8=matches)'),
+                    conditiontype: z.number().int().min(0).max(28).describe('Condition type: 0 (host group), 1 (host), 2 (trigger), 3 (trigger name), 4 (trigger severity), 5 (trigger value), 6 (time period), 7 (host IP), 8 (discovered service type), 9 (discovered service port), 10 (discovery status), 11 (uptime/downtime duration), 12 (received values), 13 (host template), 16 (problem suppressed), 18 (discovery rule), 19 (discovery check), 20 (proxy), 21 (discovery object), 22 (host name), 23 (event type), 24 (host metadata), 25 (tag), 26 (tag value), 27 (service), 28 (service name)'),
+                    operator: z.number().int().min(0).max(8).describe('Condition operator: 0 (equals), 1 (not equals), 2 (like), 3 (not like), 4 (in), 5 (>=), 6 (<=), 7 (not in), 8 (matches)'),
                     value: z.string().describe('Value to compare with'),
                     value2: z.string().optional().describe('Second value for range operators'),
-                    formulaid: z.string().optional().describe('Formula ID for custom expressions')
+                    formulaid: z.string().optional().describe('Formula ID for custom expressions (A-Z)')
                 })).min(1).describe('Array of filter conditions')
             }).describe('Action filter configuration'),
             
             // Operations (what to do when conditions are met)
             operations: z.array(z.object({
-                operationtype: z.number().int().min(0).max(12).describe('Operation type: 0 (send message), 1 (remote command), 2 (add host), 3 (remove host), 4 (add to host group), 5 (remove from host group), 6 (link to template), 7 (unlink from template), 8 (enable host), 9 (disable host), 10 (set host inventory mode), 11 (send recovery message), 12 (send update message)'),
+                operationtype: z.number().int().min(0).max(12).describe('Operation type: 0 (send message), 1 (remote command), 2 (add host), 3 (remove host), 4 (add to host group), 5 (remove from host group), 6 (link to template), 7 (unlink from template), 8 (enable host), 9 (disable host), 10 (set host inventory mode), 11 (notify all involved), 12 (notify current users)'),
                 esc_period: z.string().optional().describe('Escalation period for this operation'),
                 esc_step_from: z.number().int().optional().default(1).describe('Step to start escalation from'),
                 esc_step_to: z.number().int().optional().default(1).describe('Step to escalate to'),
@@ -128,7 +133,14 @@ function registerTools(server) {
                 opcommand: z.object({
                     type: z.number().int().min(0).max(6).describe('Command type: 0 (custom script), 1 (IPMI), 2 (SSH), 3 (Telnet), 4 (global script), 5 (user script), 6 (user script on Zabbix agent)'),
                     command: z.string().describe('Command to execute'),
-                    execute_on: z.number().int().min(0).max(2).optional().describe('Where to execute: 0 (Zabbix agent), 1 (Zabbix server), 2 (Zabbix server (proxy))')
+                    execute_on: z.number().int().min(0).max(2).optional().describe('Where to execute: 0 (Zabbix agent), 1 (Zabbix server), 2 (Zabbix server (proxy))'),
+                    port: z.string().optional().describe('Port number for SSH/Telnet commands'),
+                    authtype: z.number().int().min(0).max(1).optional().describe('Authentication type: 0 (password), 1 (public key)'),
+                    username: z.string().optional().describe('Username for SSH/Telnet commands'),
+                    password: z.string().optional().describe('Password for SSH/Telnet commands'),
+                    publickey: z.string().optional().describe('Public key file path for SSH commands'),
+                    privatekey: z.string().optional().describe('Private key file path for SSH commands'),
+                    scriptid: z.string().optional().describe('Global script ID (when type=4)')
                 }).optional().describe('Command operation configuration'),
                 
                 // Command targets
@@ -149,11 +161,17 @@ function registerTools(server) {
                     templateid: z.string().describe('Template ID')
                 })).optional().describe('Templates for template operations'),
                 
+                // Inventory operation specific
+                opinventory: z.object({
+                    inventory_mode: z.number().int().min(-1).max(1).describe('Host inventory mode: -1 (disabled), 0 (manual), 1 (automatic)')
+                }).optional().describe('Inventory operation configuration'),
+                
                 // Conditions for this operation
                 opconditions: z.array(z.object({
-                    conditiontype: z.number().int().min(14).max(16).describe('Operation condition type: 14 (event acknowledged), 15 (application), 16 (suppressed)'),
-                    operator: z.number().int().min(0).max(7).describe('Condition operator'),
-                    value: z.string().describe('Value to compare with')
+                    conditiontype: z.number().int().min(14).max(16).describe('Operation condition type: 14 (event acknowledged), 15 (application), 16 (problem is suppressed)'),
+                    operator: z.number().int().min(0).max(7).describe('Condition operator: 0 (equals), 1 (not equals), 2 (like), 3 (not like), 4 (in), 5 (>=), 6 (<=), 7 (not in)'),
+                    value: z.string().describe('Value to compare with'),
+                    formulaid: z.string().optional().describe('Formula ID for custom expressions (A-Z)')
                 })).optional().describe('Operation-specific conditions')
             })).min(1).describe('Array of operations to perform'),
             
@@ -191,8 +209,7 @@ function registerTools(server) {
                 })).optional()
             })).optional().describe('Update operations'),
             
-            // Pause operations during maintenance
-            pause_suppressed: z.number().int().min(0).max(1).optional().default(1).describe('Pause operations during maintenance')
+
         },
         async (args) => {
             try {
