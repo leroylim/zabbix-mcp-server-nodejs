@@ -121,6 +121,12 @@ const schemas = {
         z.array(z.string())
     ]).describe('Output fields: "extend" (all fields), "count" (count only), or array of specific field names.'), 'outputFields'),
     
+    // Add schema for select* parameters that do NOT accept "count"
+    selectFields: validateSchema(z.union([
+        z.literal('extend'),
+        z.array(z.string())
+    ]).describe('Select fields: "extend" (all fields) or array of specific field names.'), 'selectFields'),
+    
     // Sort order
     sortOrder: validateSchema(z.enum(['ASC', 'DESC'])
         .describe('Sort order: ASC (ascending) or DESC (descending).'), 'sortOrder'),
@@ -145,6 +151,11 @@ const schemas = {
     groupId: validateSchema(z.string()
         .min(1, 'Group ID cannot be empty')
         .describe('Unique identifier for a host group.'), 'groupId'),
+    
+    // User ID
+    userId: validateSchema(z.string()
+        .min(1, 'User ID cannot be empty')
+        .describe('Unique identifier for a Zabbix user.'), 'userId'),
     
     templateId: validateSchema(z.string()
         .min(1, 'Template ID cannot be empty')

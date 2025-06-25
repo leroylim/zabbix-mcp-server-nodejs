@@ -48,7 +48,10 @@ const problemObjectSchema = eventObjectSchema.extend({
 const tagFilterSchema = z.object({
     tag: z.string().describe("Tag name."),
     value: z.string().optional().describe("Tag value."),
-    operator: z.enum(['0', '1', '2', '3']).optional().describe("Tag operator: 0 (like), 1 (equal), 2 (not like), 3 (not equal).")
+    operator: z.union([
+        z.enum(['0', '1', '2', '3']),
+        z.number().int().min(0).max(3)
+    ]).optional().describe("Tag operator: 0 (like), 1 (equal), 2 (not like), 3 (not equal).")
 });
 
 function registerTools(server) {
@@ -66,15 +69,20 @@ function registerTools(server) {
             tags: z.array(tagFilterSchema).optional().describe("Array of tag filters."),
             recent: z.boolean().optional().default(true).describe("Show recent problems."),
             suppressed: z.boolean().optional().describe("Include suppressed problems."),
-            acknowledged: z.enum(['0', '1']).optional().describe("Filter by acknowledgment: 0 (unacknowledged), 1 (acknowledged)."),
+            acknowledged: z.boolean().optional().describe("Filter by acknowledgment: true (acknowledged), false (unacknowledged)."),
+            action: z.number().int().min(0).max(6).optional().describe("Acknowledgment action filter: 1 (close problem), 2 (acknowledge), 4 (add message), 8 (change severity), 16 (unacknowledge), 32 (suppress for)."),
+            action_userids: z.array(schemas.userId).min(1).optional().describe("Filter problems acknowledged by these user IDs."),
             time_from: schemas.unixTimestamp.optional().describe("Start time for problem filtering."),
             time_till: schemas.unixTimestamp.optional().describe("End time for problem filtering."),
             output: schemas.outputFields.optional().default("extend").describe("Output fields."),
-            selectAcknowledges: schemas.outputFields.optional().describe("Include acknowledgment information."),
-            selectTags: schemas.outputFields.optional().describe("Include problem tags."),
-            selectSuppressionData: schemas.outputFields.optional().describe("Include suppression data."),
-            sortfield: z.array(z.string()).optional().describe("Fields to sort by."),
-            sortorder: schemas.sortOrder.optional().describe("Sort order."),
+            selectAcknowledges: schemas.selectFields.optional().describe("Include acknowledgment information."),
+            selectTags: schemas.selectFields.optional().describe("Include problem tags."),
+            selectSuppressionData: schemas.selectFields.optional().describe("Include suppression data."),
+            sortfield: z.union([ z.string(), z.array(z.string()) ]).optional().describe("Fields to sort by."),
+            sortorder: z.union([
+                schemas.sortOrder,
+                z.array(schemas.sortOrder)
+            ]).optional().describe("Sort order."),
             limit: z.number().int().positive().optional().describe("Maximum number of problems to return.")
         },
         async (args) => {
