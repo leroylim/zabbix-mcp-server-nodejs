@@ -64,10 +64,13 @@ function registerTools(server) {
             name: z.string().min(1).describe('Name of the dashboard'),
             userid: z.string().optional().describe('ID of the user that owns the dashboard. Defaults to the current API user if not set by a SuperAdmin'),
             private: z.number().int().min(0).max(1).optional().default(1).describe('Dashboard sharing type: 0 (public), 1 (private)'),
-            display_period: z.enum([0, 10, 30, 60, 120, 600, 1800, 3600]).optional().default(30).describe('Dashboard page display period (in seconds). Possible values: 0, 10, 30, 60, 120, 600, 1800, 3600. Default: 0 (will use the default page display period)'),
+            display_period: z.union([
+                z.literal(0), z.literal(10), z.literal(30), z.literal(60),
+                z.literal(120), z.literal(600), z.literal(1800), z.literal(3600)
+            ]).optional().default(30).describe('Dashboard page display period in seconds (allowed values: 0,10,30,60,120,600,1800,3600)'),
             auto_start: z.number().int().min(0).max(1).optional().default(1).describe('Automatically start dashboard slideshow: 0 (disabled), 1 (enabled)'),
             
-            // Dashboard pages
+            // Dashboard pages (optional per API)
             pages: z.array(z.object({
                 name: z.string().optional().describe('Page name'),
                 display_period: z.number().int().min(0).max(31536000).optional().describe('Page refresh interval in seconds (0 = use dashboard default)'),
@@ -89,7 +92,7 @@ function registerTools(server) {
                         value: z.union([z.string(), z.number()]).describe('Field value')
                     })).optional().describe('Widget configuration fields')
                 })).optional().describe('Page widgets')
-            })).min(1).describe('Dashboard pages'),
+            })).optional().describe('Dashboard pages (optional; if omitted Zabbix creates an empty page)'),
             
             // User permissions
             users: z.array(z.object({
@@ -133,7 +136,10 @@ function registerTools(server) {
             name: z.string().optional().describe('New name for the dashboard'),
             userid: z.string().optional().describe('ID of the user that owns the dashboard'),
             private: z.number().int().min(0).max(1).optional().describe('Dashboard sharing type: 0 (public), 1 (private)'),
-            display_period: z.number().int().min(10).max(31536000).optional().describe('Dashboard refresh interval in seconds'),
+            display_period: z.union([
+                z.literal(0), z.literal(10), z.literal(30), z.literal(60),
+                z.literal(120), z.literal(600), z.literal(1800), z.literal(3600)
+            ]).optional().describe('Dashboard display period (same allowed values as create)'),
             auto_start: z.number().int().min(0).max(1).optional().describe('Automatically start dashboard slideshow'),
             pages: z.array(z.object({
                 dashboard_pageid: z.string().optional().describe('ID of existing page to update'),
