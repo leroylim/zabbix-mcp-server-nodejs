@@ -15,26 +15,33 @@ const problemTagSchema = z.object({
     value: z.string().describe("Problem tag value.")
 });
 
-// Complete Problem Object schema
-const problemObjectSchema = z.object({
-    eventid: z.string().describe("ID of the problem event."),
-    source: z.number().int().min(0).max(4).describe("Type of the problem event: 0 (event created by a trigger), 3 (internal event), 4 (event created on service status update)."),
-    object: z.number().int().min(0).max(6).describe("Type of object that is related to the problem event. Values depend on source: trigger events (0=trigger), internal events (0=trigger, 4=item, 5=LLD rule), service events (6=service)."),
+// Base Event Object schema (from official event/object documentation)
+const eventObjectSchema = z.object({
+    eventid: z.string().describe("ID of the event."),
+    source: z.number().int().min(0).max(4).describe("Type of the event source: 0 (trigger), 1 (discovery), 2 (auto registration), 3 (internal), 4 (service)."),
+    object: z.number().int().min(0).max(6).describe("Type of object that is related to the event. Values depend on source: trigger events (0=trigger), internal events (0=trigger, 4=item, 5=LLD rule), service events (6=service)."),
     objectid: z.string().describe("ID of the related object."),
-    clock: z.number().int().describe("Time when the problem event was created (Unix timestamp)."),
-    ns: z.number().int().min(0).max(999999999).describe("Nanoseconds when the problem event was created."),
+    clock: z.number().int().describe("Time when the event was created (Unix timestamp)."),
+    ns: z.number().int().min(0).max(999999999).describe("Nanoseconds when the event was created."),
+    name: z.string().describe("Event name."),
+    value: z.number().int().min(0).max(1).describe("Event state: 0 (OK), 1 (problem)."),
+    severity: z.number().int().min(0).max(5).describe("Event severity: 0 (not classified), 1 (information), 2 (warning), 3 (average), 4 (high), 5 (disaster)."),
     r_eventid: z.string().optional().describe("ID of the recovery event."),
     r_clock: z.number().int().optional().describe("Time when the recovery event was created (Unix timestamp)."),
     r_ns: z.number().int().min(0).max(999999999).optional().describe("Nanoseconds when the recovery event was created."),
+    c_eventid: z.string().optional().describe("ID of the correlated event."),
     cause_eventid: z.string().optional().describe("ID of the cause event."),
-    correlationid: z.string().optional().describe("ID of the correlation rule if this event was recovered by a global correlation rule."),
-    userid: z.string().optional().describe("ID of the user that closed the problem (if the problem was closed manually)."),
-    name: z.string().describe("Resolved problem name."),
-    acknowledged: z.number().int().min(0).max(1).describe("Acknowledge state for problem: 0 (not acknowledged), 1 (acknowledged)."),
-    severity: z.number().int().min(0).max(5).describe("Problem current severity: 0 (not classified), 1 (information), 2 (warning), 3 (average), 4 (high), 5 (disaster)."),
-    suppressed: z.number().int().min(0).max(1).describe("Whether the problem is suppressed: 0 (problem is in normal state), 1 (problem is suppressed)."),
+    correlationid: z.string().optional().describe("ID of the correlation rule if this event was processed by a global correlation rule."),
+    userid: z.string().optional().describe("ID of the user that closed the event (if the event was closed manually)."),
+    suppressed: z.number().int().min(0).max(1).describe("Whether the event is suppressed: 0 (event is in normal state), 1 (event is suppressed)."),
     opdata: z.string().optional().describe("Operational data with expanded macros."),
     urls: z.array(mediaTypeUrlSchema).optional().describe("Active media type URLs.")
+});
+
+// Problem Object schema (extends Event + adds problem-specific properties)
+const problemObjectSchema = eventObjectSchema.extend({
+    acknowledged: z.number().int().min(0).max(1).describe("Acknowledge state for problem: 0 (not acknowledged), 1 (acknowledged)."),
+    name: z.string().describe("Resolved problem name.")
 });
 
 // Tag filter schema for input parameters
