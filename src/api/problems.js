@@ -156,7 +156,7 @@ async function getUnacknowledgedProblems(additionalOptions = {}) {
         
         const options = {
             output: ['eventid', 'objectid', 'name', 'severity', 'clock'],
-            acknowledged: false,
+            acknowledged: '0',
             selectHosts: ['hostid', 'host', 'name'],
             selectTriggers: ['triggerid', 'description', 'priority'],
             sortfield: ['severity', 'clock'],

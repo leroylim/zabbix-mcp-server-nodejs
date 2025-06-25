@@ -18,6 +18,7 @@
  */
 
 const { request } = require('./zabbix-client');
+const { logger } = require('../utils/logger');
 
 // =============================================================================
 // NETWORK MAPS MANAGEMENT
@@ -194,39 +195,48 @@ async function getMapsWithElements(elementTypes = [], options = {}) {
  * @returns {Promise<Object>} Creation result with sysmapids
  */
 async function createMap(params) {
-    // Validate required parameters
-    if (!params.name) {
-        throw new Error('Map name is required');
-    }
+    logger.debug('Creating network map with params:', JSON.stringify(params, null, 2));
     
-    // Set default values
-    const defaultParams = {
-        width: 800,
-        height: 600,
-        label_type: 0,
-        label_location: 0,
-        private: 0,
-        highlight: 1,
-        markelements: 0,
-        show_unack: 0,
-        grid_size: 50,
-        grid_show: 1,
-        grid_align: 1,
-        label_format: 0,
-        label_type_host: 2,
-        label_type_hostgroup: 2,
-        label_type_trigger: 2,
-        label_type_map: 2,
-        label_type_image: 2,
-        label_string_host: '',
-        label_string_hostgroup: '',
-        label_string_trigger: '',
-        label_string_map: '',
-        label_string_image: '',
+    // Add explicit default values based on working maps
+    const mapParams = {
+        name: params.name,
+        width: params.width,
+        height: params.height,
+        label_type: params.label_type || 2,
+        label_location: params.label_location || 0,
+        highlight: params.highlight || 1,
+        markelements: params.markelements || 0,
+        expandproblem: params.expandproblem || 1,
+        show_unack: params.show_unack || 0,
+        grid_size: params.grid_size || 50,
+        grid_show: params.grid_show || 1,
+        grid_align: params.grid_align || 1,
+        label_format: params.label_format || 0,
+        private: params.private || 1,
         ...params
     };
     
-    return await request('map.create', defaultParams);
+    logger.debug('Sending to Zabbix API - map.create:', JSON.stringify(mapParams, null, 2));
+    
+    try {
+        const response = await request('map.create', mapParams);
+        logger.debug('Zabbix API response - map.create:', JSON.stringify(response, null, 2));
+        return response;
+    } catch (error) {
+        logger.error('Raw createMap error details:', {
+            message: error.message,
+            name: error.name,
+            stack: error.stack,
+            error: error.error,
+            response: error.response,
+            cause: error.cause,
+            code: error.code,
+            data: error.data
+        });
+        
+        // Re-throw the error for upstream handling
+        throw error;
+    }
 }
 
 /**

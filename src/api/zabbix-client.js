@@ -188,13 +188,60 @@ class ZabbixClient {
             logger.debug(`${config.logging.prefix} API call successful: ${method}`);
             return result;
         } catch (error) {
+            // Log the raw error for debugging before processing
+            logger.error(`${config.logging.prefix} Raw API error for ${method}:`, {
+                message: error.message,
+                stack: error.stack,
+                error: error.error,
+                response: error.response,
+                data: error.data,
+                code: error.code,
+                name: error.name,
+                cause: error.cause,
+                config: error.config,
+                request: error.request,
+                isAxiosError: error.isAxiosError,
+                fullError: JSON.stringify(error, Object.getOwnPropertyNames(error))
+            });
+            
+            // Try to extract more detailed error information from the zabbix-utils response
+            let detailedMessage = error.message;
+            let errorData = null;
+            
+            // Check if this is a wrapped Axios error with response data
+            if (error.response && error.response.data) {
+                logger.error(`${config.logging.prefix} Axios response data:`, error.response.data);
+                errorData = error.response.data;
+                
+                // Try to extract Zabbix API error details
+                if (errorData.error) {
+                    detailedMessage = `Zabbix API Error: ${errorData.error.message || errorData.error} (Code: ${errorData.error.code || 'unknown'})`;
+                    if (errorData.error.data) {
+                        detailedMessage += ` - Data: ${errorData.error.data}`;
+                    }
+                }
+            }
+            
+            // Check if the zabbix-utils library has specific error properties
+            if (error.error && typeof error.error === 'object') {
+                logger.error(`${config.logging.prefix} Zabbix library error object:`, error.error);
+                if (error.error.message) {
+                    detailedMessage = error.error.message;
+                }
+                if (error.error.data) {
+                    detailedMessage += ` - ${error.error.data}`;
+                }
+            }
+            
             // Enhanced error handling with full Zabbix API details
             const enhancedError = handleZabbixError(error, method, params);
             logger.error(`${config.logging.prefix} API call failed: ${method}`, enhancedError.message);
             logger.debug(`${config.logging.prefix} Full API error details for ${method}:`, {
                 error: enhancedError.details,
                 params: params,
-                stack: error.stack
+                stack: error.stack,
+                detailedMessage: detailedMessage,
+                errorData: errorData
             });
             
             // Check if it's an authentication error and try to reconnect (only for password auth)
@@ -222,7 +269,9 @@ class ZabbixClient {
             }
             
             // Create a new error with enhanced message for better debugging
-            throw new Error(enhancedError.message);
+            // Use the detailed message if we extracted more information
+            const finalMessage = detailedMessage !== error.message ? detailedMessage : enhancedError.message;
+            throw new Error(finalMessage);
         }
     }
 }

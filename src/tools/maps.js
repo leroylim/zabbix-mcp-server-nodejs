@@ -658,6 +658,7 @@ function registerTools(server) {
             // Map elements
             selements: z.array(z.object({
                 elementtype: z.number().int().min(0).max(4).describe('Element type: 0 (host), 1 (map), 2 (trigger), 3 (host group), 4 (image)'),
+                elementid: z.string().describe('ID of the object represented by the element'),
                 iconid_off: z.string().describe('ID of the icon used to display the element in default state'),
                 iconid_on: z.string().optional().describe('ID of the icon used to display the element in problem state'),
                 iconid_disabled: z.string().optional().describe('ID of the icon used to display disabled element'),
@@ -666,7 +667,6 @@ function registerTools(server) {
                 label_location: z.number().int().min(-1).max(3).optional().describe('Label location relative to element'),
                 x: z.number().int().min(0).describe('X coordinate of the element'),
                 y: z.number().int().min(0).describe('Y coordinate of the element'),
-                elementid: z.string().optional().describe('ID of the object represented by the element'),
                 areatype: z.number().int().min(0).max(1).optional().describe('How the element area is defined: 0 (automatic), 1 (custom)'),
                 width: z.number().int().optional().describe('Width of the element area'),
                 height: z.number().int().optional().describe('Height of the element area'),
@@ -772,7 +772,14 @@ function registerTools(server) {
                 const enhancedError = handleZabbixError(error, 'error_creating_network_map', args);
                 logger.error('Error creating network map::', enhancedError.message);
                 logger.debug('Full error details:', enhancedError.details);
-                throw new Error(enhancedError.message);
+                
+                // Return detailed error information instead of generic "Application error"
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `Failed to create network map "${args.name}". Detailed error: ${enhancedError.message}\n\nError Details:\n${JSON.stringify(enhancedError.details, null, 2)}`
+                    }]
+                };
             }
         }
     );
