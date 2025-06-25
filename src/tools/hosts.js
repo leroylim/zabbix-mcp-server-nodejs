@@ -3,6 +3,116 @@ const { logger } = require('../utils/logger');
 const { z } = require('zod');
 const schemas = require('./schemas');
 
+// Enhanced interface schema with all official properties
+const interfaceSchema = z.object({
+    interfaceid: z.string().optional().describe("Interface ID (for updates)."),
+    hostid: z.string().optional().describe("Host ID (read-only)."),
+    type: z.number().int().min(1).max(4).describe("Interface type: 1 (agent), 2 (SNMP), 3 (IPMI), 4 (JMX)."),
+    main: z.number().int().min(0).max(1).describe("Default interface: 0 (not default), 1 (default)."),
+    useip: z.number().int().min(0).max(1).describe("Connection method: 0 (DNS), 1 (IP)."),
+    ip: z.string().optional().describe("IP address for connection."),
+    dns: z.string().optional().describe("DNS name for connection."),
+    port: z.string().describe("Port number for connection."),
+    available: z.number().int().min(0).max(2).optional().describe("Interface availability: 0 (unknown), 1 (available), 2 (unavailable). Read-only."),
+    error: z.string().optional().describe("Error message. Read-only."),
+    errors_from: z.number().int().optional().describe("Time when errors started. Read-only."),
+    disable_until: z.number().int().optional().describe("Time until interface is disabled. Read-only."),
+    details: z.object({
+        version: z.number().int().optional().describe("SNMP version."),
+        bulk: z.number().int().optional().describe("SNMP bulk requests."),
+        community: z.string().optional().describe("SNMP community."),
+        securityname: z.string().optional().describe("SNMPv3 security name."),
+        securitylevel: z.number().int().optional().describe("SNMPv3 security level."),
+        authpassphrase: z.string().optional().describe("SNMPv3 auth passphrase."),
+        privpassphrase: z.string().optional().describe("SNMPv3 priv passphrase."),
+        authprotocol: z.number().int().optional().describe("SNMPv3 auth protocol."),
+        privprotocol: z.number().int().optional().describe("SNMPv3 priv protocol."),
+        contextname: z.string().optional().describe("SNMPv3 context name."),
+        max_repetitions: z.number().int().optional().describe("Max repetitions for SNMP bulk requests.")
+    }).optional().describe("Interface specific details (mainly for SNMP).")
+});
+
+// Enhanced tag schema
+const tagSchema = z.object({
+    tag: z.string().min(1).describe("Tag name."),
+    value: z.string().describe("Tag value."),
+    automatic: z.number().int().min(0).max(1).optional().describe("Tag type: 0 (manual), 1 (automatic). Read-only.")
+});
+
+// Enhanced inventory schema with specific fields
+const inventorySchema = z.object({
+    alias: z.string().max(64).optional().describe("Alias."),
+    asset_tag: z.string().max(64).optional().describe("Asset tag."),
+    chassis: z.string().max(64).optional().describe("Chassis."),
+    contact: z.string().max(65535).optional().describe("Contact person."),
+    contract_number: z.string().max(64).optional().describe("Contract number."),
+    date_hw_decomm: z.string().max(64).optional().describe("HW decommissioning date."),
+    date_hw_expiry: z.string().max(64).optional().describe("HW expiry date."),
+    date_hw_install: z.string().max(64).optional().describe("HW installation date."),
+    date_hw_purchase: z.string().max(64).optional().describe("HW purchase date."),
+    deployment_status: z.string().max(64).optional().describe("Deployment status."),
+    hardware: z.string().max(255).optional().describe("Hardware."),
+    hardware_full: z.string().max(65535).optional().describe("Detailed hardware info."),
+    host_netmask: z.string().max(39).optional().describe("Host subnet mask."),
+    host_networks: z.string().max(65535).optional().describe("Host networks."),
+    host_router: z.string().max(39).optional().describe("Host router."),
+    hw_arch: z.string().max(32).optional().describe("HW architecture."),
+    installer_name: z.string().max(64).optional().describe("Installer name."),
+    location: z.string().max(65535).optional().describe("Location."),
+    location_lat: z.string().max(16).optional().describe("Location latitude."),
+    location_lon: z.string().max(16).optional().describe("Location longitude."),
+    macaddress_a: z.string().max(64).optional().describe("MAC address A."),
+    macaddress_b: z.string().max(64).optional().describe("MAC address B."),
+    model: z.string().max(64).optional().describe("Model."),
+    name: z.string().max(128).optional().describe("Name."),
+    notes: z.string().max(65535).optional().describe("Notes."),
+    oob_ip: z.string().max(39).optional().describe("OOB IP address."),
+    oob_netmask: z.string().max(39).optional().describe("OOB subnet mask."),
+    oob_router: z.string().max(39).optional().describe("OOB router."),
+    os: z.string().max(128).optional().describe("OS name."),
+    os_full: z.string().max(255).optional().describe("Detailed OS name."),
+    os_short: z.string().max(128).optional().describe("Short OS name."),
+    poc_1_cell: z.string().max(64).optional().describe("Primary POC mobile number."),
+    poc_1_email: z.string().max(128).optional().describe("Primary email."),
+    poc_1_name: z.string().max(128).optional().describe("Primary POC name."),
+    poc_1_notes: z.string().max(65535).optional().describe("Primary POC notes."),
+    poc_1_phone_a: z.string().max(64).optional().describe("Primary POC phone A."),
+    poc_1_phone_b: z.string().max(64).optional().describe("Primary POC phone B."),
+    poc_1_screen: z.string().max(64).optional().describe("Primary POC screen name."),
+    poc_2_cell: z.string().max(64).optional().describe("Secondary POC mobile number."),
+    poc_2_email: z.string().max(128).optional().describe("Secondary POC email."),
+    poc_2_name: z.string().max(128).optional().describe("Secondary POC name."),
+    poc_2_notes: z.string().max(65535).optional().describe("Secondary POC notes."),
+    poc_2_phone_a: z.string().max(64).optional().describe("Secondary POC phone A."),
+    poc_2_phone_b: z.string().max(64).optional().describe("Secondary POC phone B."),
+    poc_2_screen: z.string().max(64).optional().describe("Secondary POC screen name."),
+    serialno_a: z.string().max(64).optional().describe("Serial number A."),
+    serialno_b: z.string().max(64).optional().describe("Serial number B."),
+    site_address_a: z.string().max(128).optional().describe("Site address A."),
+    site_address_b: z.string().max(128).optional().describe("Site address B."),
+    site_address_c: z.string().max(128).optional().describe("Site address C."),
+    site_city: z.string().max(128).optional().describe("Site city."),
+    site_country: z.string().max(64).optional().describe("Site country."),
+    site_notes: z.string().max(65535).optional().describe("Site notes."),
+    site_rack: z.string().max(128).optional().describe("Site rack location."),
+    site_state: z.string().max(64).optional().describe("Site state."),
+    site_zip: z.string().max(64).optional().describe("Site ZIP/postal code."),
+    software: z.string().max(255).optional().describe("Software."),
+    software_app_a: z.string().max(64).optional().describe("Software application A."),
+    software_app_b: z.string().max(64).optional().describe("Software application B."),
+    software_app_c: z.string().max(64).optional().describe("Software application C."),
+    software_app_d: z.string().max(64).optional().describe("Software application D."),
+    software_app_e: z.string().max(64).optional().describe("Software application E."),
+    software_full: z.string().max(65535).optional().describe("Software details."),
+    tag: z.string().max(64).optional().describe("Tag."),
+    type: z.string().max(64).optional().describe("Type."),
+    type_full: z.string().max(64).optional().describe("Type details."),
+    url_a: z.string().max(2048).optional().describe("URL A."),
+    url_b: z.string().max(2048).optional().describe("URL B."),
+    url_c: z.string().max(2048).optional().describe("URL C."),
+    vendor: z.string().max(64).optional().describe("Vendor.")
+});
+
 // Helper function to resolve host identifiers (ID, technical name, visible name, or IP) to host IDs
 async function resolveHostIdentifiers(identifiers) {
     if (!identifiers || identifiers.length === 0) {
@@ -100,6 +210,10 @@ function registerTools(server) {
                 .describe("Include host inventory data. Use 'extend' for all inventory fields or specify an array of inventory property names (e.g. ['os', 'type'])."),
             selectItems: schemas.outputFields.optional().describe("Include items from the host."),
             selectTriggers: schemas.outputFields.optional().describe("Include triggers from the host."),
+            selectTags: schemas.outputFields.optional().describe("Include host tags. Use 'extend' for all tag fields or specify an array like ['tag', 'value']."),
+            selectValueMaps: schemas.outputFields.optional().describe("Include value maps used by the host. Use 'extend' for all value map fields."),
+            selectHostDiscovery: schemas.outputFields.optional().describe("Include host discovery information. Use 'extend' for all discovery fields."),
+            selectDiscoveryRule: schemas.outputFields.optional().describe("Include discovery rule that created the host. Use 'extend' for all rule fields."),
             limit: z.number().int().positive().optional().describe("Maximum number of hosts to return."),
             sortfield: z.union([z.string(), z.array(z.string())]).optional().describe("Field(s) to sort by (e.g., 'name', ['status', 'host'])."),
             sortorder: schemas.sortOrder.optional().describe("Sort order ('ASC' or 'DESC').")
@@ -148,26 +262,36 @@ function registerTools(server) {
         'zabbix_host_create',
         'Creates a new host in Zabbix with specified groups, interfaces, and optional templates/macros.',
         {
-            host: z.string().min(1).describe('Technical name of the host (e.g., srv-app-01).'),
-            name: z.string().optional().describe('Visible name of the host. Defaults to technical name if not provided.'),
+            host: z.string().min(1).max(128).describe('Technical name of the host (e.g., srv-app-01).'),
+            name: z.string().max(128).optional().describe('Visible name of the host. Defaults to technical name if not provided.'),
             groups: z.array(schemas.hostGroup).min(1)
                 .describe('Array of host group objects to assign this host to. Each object must have "groupid".'),
-            interfaces: z.array(schemas.interface).min(1)
+            interfaces: z.array(interfaceSchema).min(1)
                 .describe('Array of interface objects for the host.'),
             templates: z.array(schemas.template).optional()
                 .describe('Array of template objects to link to the host. Each object must have "templateid".'),
             macros: z.array(schemas.macro).optional()
                 .describe('Array of host macros (UserMacros).'),
+            tags: z.array(tagSchema).optional()
+                .describe('Array of host tags.'),
             inventory_mode: z.number().int().min(-1).max(1).optional().describe("Host inventory mode: -1 (disabled), 0 (manual), 1 (automatic)."),
-            description: z.string().optional().describe('Host description.'),
+            inventory: inventorySchema.optional().describe("Host inventory data."),
+            description: z.string().max(65535).optional().describe('Host description.'),
             status: z.number().int().min(0).max(1).optional().default(0).describe('Host status: 0 (monitored), 1 (unmonitored).'),
+            monitored_by: z.number().int().min(0).max(2).optional().describe("What monitors the host: 0 (server), 1 (proxy), 2 (proxy group)."),
             proxy_hostid: z.string().optional().describe("ID of the proxy that monitors the host. Use '0' if monitored by server."),
-            tls_connect: z.number().int().optional().describe("Connections TO host: 1-No enc, 2-PSK, 4-Cert."),
-            tls_accept: z.number().int().optional().describe("Connections FROM host: 1-No enc, 2-PSK, 4-Cert (bitmask)."),
-            tls_issuer: z.string().optional(),
-            tls_subject: z.string().optional(),
-            tls_psk_identity: z.string().optional(),
-            tls_psk: z.string().optional().describe("PSK value (write-only).")
+            proxy_groupid: z.string().optional().describe("ID of the proxy group that monitors the host."),
+            tls_connect: z.number().int().min(1).max(4).optional().describe("Connections TO host: 1 (no encryption), 2 (PSK), 4 (certificate)."),
+            tls_accept: z.number().int().min(1).max(7).optional().describe("Connections FROM host (bitmask): 1 (no encryption), 2 (PSK), 4 (certificate)."),
+            tls_issuer: z.string().max(1024).optional().describe("Certificate issuer."),
+            tls_subject: z.string().max(1024).optional().describe("Certificate subject."),
+            tls_psk_identity: z.string().max(128).optional().describe("PSK identity."),
+            tls_psk: z.string().max(512).optional().describe("PSK value (write-only)."),
+            ipmi_authtype: z.number().int().min(-1).max(6).optional().describe("IPMI authentication algorithm: -1 (default), 0 (none), 1 (MD2), 2 (MD5), 4 (straight), 5 (OEM), 6 (RMCP+)."),
+            ipmi_privilege: z.number().int().min(1).max(5).optional().describe("IPMI privilege level: 1 (callback), 2 (user), 3 (operator), 4 (admin), 5 (OEM)."),
+            ipmi_username: z.string().max(16).optional().describe("IPMI username."),
+            ipmi_password: z.string().max(20).optional().describe("IPMI password."),
+            uuid: z.string().optional().describe("UUID of the host.")
         },
         async (args) => {
             try {
@@ -191,38 +315,43 @@ function registerTools(server) {
         'Updates properties of an existing Zabbix host. Provide only the hostid and the properties to change.',
         {
             hostid: schemas.hostId.describe("ID of the host to update."),
-            host: z.string().optional().describe('New technical name of the host.'),
-            name: z.string().optional().describe('New visible name of the host.'),
+            host: z.string().max(128).optional().describe('New technical name of the host.'),
+            name: z.string().max(128).optional().describe('New visible name of the host.'),
             groups: z.array(schemas.hostGroup).optional()
                 .describe('Replaces ALL existing host group memberships. Array of objects with "groupid".'),
-            interfaces: z.array(z.object({
-                interfaceid: z.string().optional().describe("ID of existing interface to update. If omitted, new interface is created (and old ones removed)."),
-                type: z.number().int().min(1).max(4), 
-                main: z.number().int().min(0).max(1),
-                useip: z.number().int().min(0).max(1), 
-                ip: z.string().ip().optional(), 
-                dns: z.string().optional(), 
-                port: z.string(),
-                details: z.any().optional()
-            })).optional().describe('Replaces ALL existing interfaces for the host.'),
+            interfaces: z.array(interfaceSchema).optional()
+                .describe('Replaces ALL existing interfaces for the host.'),
             templates: z.array(schemas.template).optional()
                 .describe('Replaces ALL currently linked templates. Array of objects with "templateid".'),
             templates_clear: z.array(schemas.template).optional()
                 .describe('Templates to unlink and clear. Array of objects with "templateid".'),
             macros: z.array(z.object({
-                hostmacroid: z.string().optional(),
-                macro: z.string(),
-                value: z.string(),
-                description: z.string().optional(),
-                type: z.number().int().min(0).max(2).optional()
+                hostmacroid: z.string().optional().describe("Macro ID for updating existing macro."),
+                macro: z.string().describe("Macro name (including {$ and })."),
+                value: z.string().describe("Macro value."),
+                description: z.string().optional().describe("Macro description."),
+                type: z.number().int().min(0).max(2).optional().describe("Macro type: 0 (text), 1 (secret), 2 (vault).")
             })).optional().describe('Replaces ALL existing host macros. Provide hostmacroid to update specific macro.'),
-            inventory_mode: z.number().int().min(-1).max(1).optional(),
-            inventory: z.record(z.string(), z.any()).optional().describe("Object with inventory fields to update, e.g., { os: 'New OS', type: 'Server X' }."),
-            description: z.string().optional(),
+            tags: z.array(tagSchema).optional()
+                .describe('Replaces ALL existing host tags.'),
+            inventory_mode: z.number().int().min(-1).max(1).optional().describe("Host inventory mode: -1 (disabled), 0 (manual), 1 (automatic)."),
+            inventory: inventorySchema.optional().describe("Host inventory data to update."),
+            description: z.string().max(65535).optional().describe('New host description.'),
             status: z.number().int().min(0).max(1).optional().describe('Host status: 0 (monitored), 1 (unmonitored).'),
+            monitored_by: z.number().int().min(0).max(2).optional().describe("What monitors the host: 0 (server), 1 (proxy), 2 (proxy group)."),
             proxy_hostid: z.string().optional().describe("ID of the proxy. Use '0' for Zabbix server."),
-            tls_connect: z.number().int().optional(), 
-            tls_accept: z.number().int().optional()
+            proxy_groupid: z.string().optional().describe("ID of the proxy group."),
+            tls_connect: z.number().int().min(1).max(4).optional().describe("Connections TO host: 1 (no encryption), 2 (PSK), 4 (certificate)."),
+            tls_accept: z.number().int().min(1).max(7).optional().describe("Connections FROM host (bitmask): 1 (no encryption), 2 (PSK), 4 (certificate)."),
+            tls_issuer: z.string().max(1024).optional().describe("Certificate issuer."),
+            tls_subject: z.string().max(1024).optional().describe("Certificate subject."),
+            tls_psk_identity: z.string().max(128).optional().describe("PSK identity."),
+            tls_psk: z.string().max(512).optional().describe("PSK value (write-only)."),
+            ipmi_authtype: z.number().int().min(-1).max(6).optional().describe("IPMI authentication algorithm: -1 (default), 0 (none), 1 (MD2), 2 (MD5), 4 (straight), 5 (OEM), 6 (RMCP+)."),
+            ipmi_privilege: z.number().int().min(1).max(5).optional().describe("IPMI privilege level: 1 (callback), 2 (user), 3 (operator), 4 (admin), 5 (OEM)."),
+            ipmi_username: z.string().max(16).optional().describe("IPMI username."),
+            ipmi_password: z.string().max(20).optional().describe("IPMI password."),
+            uuid: z.string().optional().describe("UUID of the host.")
         },
         async (args) => {
             try {
