@@ -3,6 +3,168 @@ const api = require('../api');
 const { z } = require('zod');
 const { handleZabbixError } = require('../utils/errors');
 
+// =============================================================================
+// HELPER FUNCTIONS FOR HUMAN-READABLE FORMATTING
+// =============================================================================
+
+/**
+ * Convert service status code to human-readable name
+ * @param {string|number} status - Service status code
+ * @returns {string} Human-readable status name
+ */
+function getServiceStatusName(status) {
+    const statusNum = parseInt(status);
+    const statuses = {
+        '-1': 'OK',
+        '0': 'Not classified',
+        '1': 'Information',
+        '2': 'Warning',
+        '3': 'Average',
+        '4': 'High',
+        '5': 'Disaster'
+    };
+    return statuses[statusNum] || `Unknown (${status})`;
+}
+
+/**
+ * Convert service algorithm code to human-readable name
+ * @param {string|number} algorithm - Algorithm code
+ * @returns {string} Human-readable algorithm name
+ */
+function getServiceAlgorithmName(algorithm) {
+    const algorithmNum = parseInt(algorithm);
+    const algorithms = {
+        0: 'Do not calculate',
+        1: 'Problem, if at least one child has a problem',
+        2: 'Problem, if all children have problems'
+    };
+    return algorithms[algorithmNum] || `Unknown (${algorithm})`;
+}
+
+/**
+ * Convert propagation rule code to human-readable name
+ * @param {string|number} rule - Propagation rule code
+ * @returns {string} Human-readable propagation rule name
+ */
+function getPropagationRuleName(rule) {
+    const ruleNum = parseInt(rule);
+    const rules = {
+        0: 'Propagate as is',
+        1: 'Increase by one',
+        2: 'Decrease by one',
+        3: 'Ignore this service'
+    };
+    return rules[ruleNum] || `Unknown (${rule})`;
+}
+
+/**
+ * Convert status rule type to human-readable description
+ * @param {string|number} type - Status rule type code
+ * @returns {string} Human-readable status rule description
+ */
+function getStatusRuleTypeName(type) {
+    const typeNum = parseInt(type);
+    const types = {
+        0: 'At least N child services have status or above',
+        1: 'At least N% of child services have status or above',
+        2: 'Less than N child services have status or below',
+        3: 'Less than N% of child services have status or below',
+        4: 'Weight of child services with status or above is at least W',
+        5: 'Weight of child services with status or above is at least N%',
+        6: 'Weight of child services with status or below is less than W',
+        7: 'Weight of child services with status or below is less than N%'
+    };
+    return types[typeNum] || `Unknown (${type})`;
+}
+
+/**
+ * Convert problem tag operator to human-readable name
+ * @param {string|number} operator - Operator code
+ * @returns {string} Human-readable operator name
+ */
+function getProblemTagOperatorName(operator) {
+    const operatorNum = parseInt(operator);
+    const operators = {
+        0: 'Equals',
+        2: 'Like'
+    };
+    return operators[operatorNum] || `Unknown (${operator})`;
+}
+
+/**
+ * Format service information with human-readable values
+ * @param {Object} service - Service object
+ * @returns {Object} Enhanced service object with human-readable formatting
+ */
+function formatServiceInfo(service) {
+    const formatted = { ...service };
+    
+    // Add human-readable status
+    if (service.status !== undefined) {
+        formatted.status_name = getServiceStatusName(service.status);
+    }
+    
+    // Add human-readable algorithm
+    if (service.algorithm !== undefined) {
+        formatted.algorithm_name = getServiceAlgorithmName(service.algorithm);
+    }
+    
+    // Add human-readable propagation rule
+    if (service.propagation_rule !== undefined) {
+        formatted.propagation_rule_name = getPropagationRuleName(service.propagation_rule);
+    }
+    
+    // Format status rules
+    if (service.status_rules && Array.isArray(service.status_rules)) {
+        formatted.status_rules = service.status_rules.map(rule => ({
+            ...rule,
+            type_name: getStatusRuleTypeName(rule.type),
+            limit_status_name: getServiceStatusName(rule.limit_status),
+            new_status_name: getServiceStatusName(rule.new_status)
+        }));
+    }
+    
+    // Format problem tags
+    if (service.problem_tags && Array.isArray(service.problem_tags)) {
+        formatted.problem_tags = service.problem_tags.map(tag => ({
+            ...tag,
+            operator_name: getProblemTagOperatorName(tag.operator)
+        }));
+    }
+    
+    // Add calculated fields
+    formatted.parent_count = service.parents ? service.parents.length : 0;
+    formatted.child_count = service.children ? service.children.length : 0;
+    formatted.is_root_service = !service.parents || service.parents.length === 0;
+    formatted.is_leaf_service = !service.children || service.children.length === 0;
+    formatted.readonly_name = service.readonly === '1' ? 'Read-only' : 'Read-write';
+    
+    return formatted;
+}
+
+/**
+ * Format service hierarchy with enhanced information
+ * @param {Array} services - Array of service objects
+ * @returns {Array} Enhanced services with hierarchy information
+ */
+function formatServiceHierarchy(services) {
+    return services.map(service => {
+        const formatted = formatServiceInfo(service);
+        
+        // Format parent services
+        if (service.parents && Array.isArray(service.parents)) {
+            formatted.parents = service.parents.map(parent => formatServiceInfo(parent));
+        }
+        
+        // Format child services
+        if (service.children && Array.isArray(service.children)) {
+            formatted.children = service.children.map(child => formatServiceInfo(child));
+        }
+        
+        return formatted;
+    });
+}
+
 function registerTools(server) {
     // Get services
     server.tool(
@@ -50,11 +212,14 @@ function registerTools(server) {
 
                 const services = await api.getServices(apiParams);
                 
+                // Enhance services with human-readable formatting
+                const enhancedServices = formatServiceHierarchy(services);
+                
                 logger.info(`Retrieved ${services.length} services`);
                 return {
                     content: [{
                         type: 'text',
-                        text: `Found ${services.length} services:\n\n${JSON.stringify(services, null, 2)}`
+                        text: `Found ${services.length} services:\n\n${JSON.stringify(enhancedServices, null, 2)}`
                     }]
                 };
             } catch (error) {
@@ -92,16 +257,18 @@ function registerTools(server) {
             // Problem tags
             problem_tags: z.array(z.object({
                 tag: z.string().describe('Problem tag name'),
-                operator: z.number().int().min(0).max(7).optional().default(0).describe('Tag operator: 0 (equals), 1 (like), 2 (not equals), 3 (not like), 4 (exists), 5 (not exists)'),
+                operator: z.number().int().refine(val => val === 0 || val === 2, {
+                    message: "Problem tag operator must be 0 (equals) or 2 (like)"
+                }).optional().default(0).describe('Tag operator: 0 (equals), 2 (like)'),
                 value: z.string().optional().describe('Problem tag value')
             })).optional().describe('Problem tags that link problems to this service'),
             
             // Status rules
             status_rules: z.array(z.object({
-                type: z.number().int().min(0).max(1).describe('Status rule type: 0 (at least N child services have status), 1 (at least N% of child services have status)'),
-                limit_value: z.number().int().min(1).describe('Limit value (N or N%)'),
-                limit_status: z.number().int().min(0).max(5).describe('Trigger status: 0 (OK), 1 (not classified), 2 (information), 3 (warning), 4 (average), 5 (high)'),
-                new_status: z.number().int().min(0).max(5).describe('New service status: 0 (OK), 1 (not classified), 2 (information), 3 (warning), 4 (average), 5 (high)')
+                type: z.number().int().min(0).max(7).describe('Status rule type: 0-7 (different algorithms for status calculation based on child services)'),
+                limit_value: z.number().int().min(1).max(100000).describe('Limit value (N, N%, or W weight)'),
+                limit_status: z.number().int().min(-1).max(5).describe('Limit status: -1 (OK), 0 (Not classified), 1 (Information), 2 (Warning), 3 (Average), 4 (High), 5 (Disaster)'),
+                new_status: z.number().int().min(0).max(5).describe('New status: 0 (Not classified), 1 (Information), 2 (Warning), 3 (Average), 4 (High), 5 (Disaster)')
             })).optional().describe('Status calculation rules'),
             
             // Service tags
@@ -157,10 +324,10 @@ function registerTools(server) {
                 value: z.string().optional().describe('Problem tag value')
             })).optional().describe('Problem tags (replaces all existing problem tags)'),
             status_rules: z.array(z.object({
-                type: z.number().int().min(0).max(1).describe('Status rule type'),
-                limit_value: z.number().int().min(1).describe('Limit value'),
-                limit_status: z.number().int().min(0).max(5).describe('Trigger status'),
-                new_status: z.number().int().min(0).max(5).describe('New service status')
+                type: z.number().int().min(0).max(7).describe('Status rule type: 0-7 (different algorithms for status calculation based on child services)'),
+                limit_value: z.number().int().min(1).max(100000).describe('Limit value (N, N%, or W weight)'),
+                limit_status: z.number().int().min(-1).max(5).describe('Limit status: -1 (OK), 0 (Not classified), 1 (Information), 2 (Warning), 3 (Average), 4 (High), 5 (Disaster)'),
+                new_status: z.number().int().min(0).max(5).describe('New status: 0 (Not classified), 1 (Information), 2 (Warning), 3 (Average), 4 (High), 5 (Disaster)')
             })).optional().describe('Status calculation rules (replaces all existing rules)'),
             tags: z.array(z.object({
                 tag: z.string().describe('Service tag name'),

@@ -4,6 +4,102 @@ const { z } = require('zod');
 const { handleZabbixError } = require('../utils/errors');
 const schemas = require('./schemas');
 
+// Helper functions for media type management
+function getMediaTypeName(type) {
+    const typeNames = {
+        0: 'Email',
+        1: 'Script', 
+        2: 'SMS',
+        3: 'Webhook',
+        4: 'Jabber'
+    };
+    return typeNames[type] || `Unknown (${type})`;
+}
+
+function getMediaStatusName(status) {
+    const statusNames = {
+        0: 'Enabled',
+        1: 'Disabled'
+    };
+    return statusNames[status] || `Unknown (${status})`;
+}
+
+function getContentTypeName(content_type) {
+    const contentTypes = {
+        0: 'Text/Plain',
+        1: 'Text/HTML'
+    };
+    return contentTypes[content_type] || `Unknown (${content_type})`;
+}
+
+function getSecurityTypeName(security) {
+    const securityTypes = {
+        0: 'None',
+        1: 'STARTTLS', 
+        2: 'SSL/TLS'
+    };
+    return securityTypes[security] || `Unknown (${security})`;
+}
+
+function getAlertStatusName(status) {
+    const statusNames = {
+        0: 'Not sent',
+        1: 'Sent',
+        2: 'Failed'
+    };
+    return statusNames[status] || `Unknown (${status})`;
+}
+
+function formatMediaTypeInfo(mediaType) {
+    const formatted = {
+        ...mediaType,
+        type_name: getMediaTypeName(parseInt(mediaType.type)),
+        status_name: getMediaStatusName(parseInt(mediaType.status || '0'))
+    };
+
+    // Add type-specific formatting
+    if (mediaType.type === '0') { // Email
+        if (mediaType.smtp_security) {
+            formatted.smtp_security_name = getSecurityTypeName(parseInt(mediaType.smtp_security));
+        }
+        if (mediaType.content_type) {
+            formatted.content_type_name = getContentTypeName(parseInt(mediaType.content_type));
+        }
+    }
+
+    // Format webhook parameters
+    if (mediaType.type === '3' && mediaType.parameters) { // Webhook
+        formatted.parameters_formatted = formatWebhookParameters(mediaType.parameters);
+    }
+
+    // Format script parameters  
+    if (mediaType.type === '1' && mediaType.parameters) { // Script
+        formatted.parameters_formatted = formatScriptParameters(mediaType.parameters);
+    }
+
+    return formatted;
+}
+
+function formatWebhookParameters(parameters) {
+    if (!Array.isArray(parameters)) return parameters;
+    return parameters.map(param => ({
+        name: param.name,
+        value: param.value,
+        description: `Webhook parameter: ${param.name}`
+    }));
+}
+
+function formatScriptParameters(parameters) {
+    if (!Array.isArray(parameters)) return parameters;
+    return parameters
+        .sort((a, b) => (a.sortorder || 0) - (b.sortorder || 0))
+        .map((param, index) => ({
+            position: param.sortorder || index,
+            value: param.value,
+            description: `Script argument ${param.sortorder || index}`
+        }));
+}
+
 function registerTools(server) {
     // Get media types
     server.tool(
@@ -28,13 +124,16 @@ function registerTools(server) {
             try {
                 const mediaTypes = await api.getMediaTypes(args);
                 
+                // Enhanced formatting for media types
+                const formattedMediaTypes = mediaTypes.map(mediaType => formatMediaTypeInfo(mediaType));
+                
                 logger.info(`Retrieved ${mediaTypes.length} media types`);
                 
                 // Return structured MCP response format like other tools
                 return {
                     content: [{
                         type: 'text',
-                        text: `Retrieved ${mediaTypes.length} media types:\n\n${JSON.stringify(mediaTypes, null, 2)}`
+                        text: `Retrieved ${mediaTypes.length} media types:\n\n${JSON.stringify(formattedMediaTypes, null, 2)}`
                     }]
                 };
                 
@@ -83,6 +182,15 @@ function registerTools(server) {
             webhook_timeout: z.string().optional().default('30s').describe('Webhook timeout'),
             webhook_process_tags: z.number().int().min(0).max(1).optional().describe('Process tags in webhook'),
             webhook_http_proxy: z.string().optional().describe('HTTP proxy for webhook'),
+            
+            // Modern webhook features
+            process_tags: z.number().int().min(0).max(1).optional().describe('Process JSON property values in webhook response as tags'),
+            show_event_menu: z.number().int().min(0).max(1).optional().describe('Include entry in event menu'),
+            event_menu_url: z.string().optional().describe('URL used in event menu entry'),
+            event_menu_name: z.string().optional().describe('Name used for event menu entry'),
+            
+            // Content type for email
+            content_type: z.number().int().min(0).max(1).optional().describe('Content type: 0 (text/plain), 1 (text/html)'),
             
             // Message templates
             message_templates: z.array(z.object({

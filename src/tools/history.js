@@ -3,11 +3,34 @@ const api = require('../api');
 const { z } = require('zod');
 const { handleZabbixError } = require('../utils/errors');
 
+// Helper functions for enhanced history formatting
+function getHistoryTypeName(historyType) {
+    const typeNames = {
+        0: 'float',
+        1: 'character', 
+        2: 'log',
+        3: 'unsigned_integer',
+        4: 'text'
+    };
+    return typeNames[historyType] || 'unknown';
+}
+
+function getSeverityName(severity) {
+    const severityNames = {
+        0: 'Success',
+        1: 'Information', 
+        2: 'Warning',
+        3: 'Error',
+        4: 'Critical'
+    };
+    return severityNames[severity] || `Level ${severity}`;
+}
+
 function registerTools(server) {
-    // Get history data
+    // Get history data with enhanced type-specific support
     server.tool(
         'zabbix_get_history',
-        'Get historical data for items from Zabbix',
+        'Get historical data for items from Zabbix with type-specific formatting',
         {
             itemids: z.array(z.string()).min(1).describe('Array of item IDs to get history for'),
             history: z.number().int().min(0).max(4).optional().describe('Object type to return (0 - numeric float, 1 - character, 2 - log, 3 - numeric unsigned, 4 - text)'),
@@ -39,17 +62,65 @@ function registerTools(server) {
                 
                 logger.info(`Retrieved ${history.length} history records`);
                 
-                // Format timestamps for readability
-                const formattedHistory = history.map(record => ({
-                    ...record,
-                    clock_readable: new Date(record.clock * 1000).toISOString(),
-                    ns_readable: record.ns ? `${record.ns}ns` : undefined
-                }));
+                // Enhanced type-specific formatting based on history type
+                const historyType = params.history;
+                const formattedHistory = history.map(record => {
+                    const baseFormatting = {
+                        ...record,
+                        clock_readable: new Date(record.clock * 1000).toISOString(),
+                        ns_readable: record.ns ? `${record.ns}ns` : undefined,
+                        history_type: getHistoryTypeName(historyType)
+                    };
+                    
+                    // Type-specific enhancements based on official Zabbix history object types
+                    if (historyType === 2) {
+                        // Log history - enhance with Windows event log properties
+                        return {
+                            ...baseFormatting,
+                            logeventid_info: record.logeventid ? `Event ID: ${record.logeventid}` : undefined,
+                            severity_readable: record.severity !== undefined ? getSeverityName(record.severity) : undefined,
+                            source_info: record.source ? `Source: ${record.source}` : undefined,
+                            timestamp_readable: record.timestamp ? new Date(record.timestamp * 1000).toISOString() : undefined,
+                            value_type: 'log_entry'
+                        };
+                    } else if (historyType === 4) {
+                        // Text history - enhance with text-specific properties
+                        return {
+                            ...baseFormatting,
+                            value_type: 'text',
+                            text_length: record.value ? record.value.length : 0,
+                            has_unique_id: record.id ? true : false
+                        };
+                    } else if (historyType === 0) {
+                        // Float history - enhance with numeric formatting
+                        return {
+                            ...baseFormatting,
+                            value_type: 'float',
+                            value_formatted: typeof record.value === 'number' ? record.value.toFixed(4) : record.value
+                        };
+                    } else if (historyType === 3) {
+                        // Integer history - enhance with integer formatting
+                        return {
+                            ...baseFormatting,
+                            value_type: 'unsigned_integer',
+                            value_formatted: record.value
+                        };
+                    } else if (historyType === 1) {
+                        // String history - enhance with string-specific properties
+                        return {
+                            ...baseFormatting,
+                            value_type: 'character',
+                            string_length: record.value ? record.value.length : 0
+                        };
+                    }
+                    
+                    return baseFormatting;
+                });
                 
                 return {
                     content: [{
                         type: 'text',
-                        text: `Found ${history.length} history records:\n\n${JSON.stringify(formattedHistory, null, 2)}`
+                        text: `Found ${history.length} history records (type: ${getHistoryTypeName(historyType)}):\n\n${JSON.stringify(formattedHistory, null, 2)}`
                     }]
                 };
             } catch (error) {
@@ -152,7 +223,7 @@ function registerTools(server) {
                     itemInfo = items[0];
                 }
                 
-                // Get history data
+                // Get history data with automatic type detection
                 const apiParams = {
                     itemids: [itemid],
                     time_from: time_from,
@@ -172,26 +243,59 @@ function registerTools(server) {
                 
                 logger.info(`Retrieved ${history.length} history records for item ${itemid}`);
                 
-                // Format response
+                // Enhanced formatting with type-specific properties
+                const historyType = apiParams.history;
+                const enhancedHistory = history.map(record => {
+                    const baseRecord = {
+                        ...record,
+                        timestamp: new Date(record.clock * 1000).toISOString(),
+                        value_formatted: itemInfo && itemInfo.units ? `${record.value} ${itemInfo.units}` : record.value,
+                        ns_precision: record.ns ? `${record.ns}ns` : undefined,
+                        history_type: getHistoryTypeName(historyType)
+                    };
+                    
+                    // Add type-specific enhancements
+                    if (historyType === 2 && record.logeventid) {
+                        // Log history enhancements
+                        baseRecord.log_details = {
+                            event_id: record.logeventid,
+                            severity: getSeverityName(record.severity),
+                            source: record.source,
+                            event_timestamp: record.timestamp ? new Date(record.timestamp * 1000).toISOString() : undefined
+                        };
+                    } else if (historyType === 4 && record.id) {
+                        // Text history enhancements
+                        baseRecord.text_details = {
+                            unique_id: record.id,
+                            content_length: record.value ? record.value.length : 0
+                        };
+                    }
+                    
+                    return baseRecord;
+                });
+                
+                // Format response with enhanced metadata
                 const response = {
                     item_info: itemInfo,
+                    history_type_info: {
+                        type_code: historyType,
+                        type_name: getHistoryTypeName(historyType),
+                        supports_nanoseconds: true,
+                        supports_unique_id: historyType === 2 || historyType === 4
+                    },
                     time_range: {
                         from: new Date(time_from * 1000).toISOString(),
                         to: new Date(now * 1000).toISOString(),
                         hours_back: hours_back
                     },
                     records_count: history.length,
-                    history: history.map(record => ({
-                        ...record,
-                        timestamp: new Date(record.clock * 1000).toISOString(),
-                        value_formatted: itemInfo && itemInfo.units ? `${record.value} ${itemInfo.units}` : record.value
-                    }))
+                    history: enhancedHistory
                 };
                 
                 return {
                     content: [{
                         type: 'text',
-                        text: `Historical data for item ${itemid} (last ${hours_back} hours):\n\n${JSON.stringify(response, null, 2)}`
+                        text: `Historical data for item ${itemid} (last ${hours_back} hours, type: ${getHistoryTypeName(historyType)}):\n\n${JSON.stringify(response, null, 2)}`
                     }]
                 };
             } catch (error) {

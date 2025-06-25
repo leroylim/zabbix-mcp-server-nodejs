@@ -3,6 +3,96 @@ const api = require('../api');
 const { z } = require('zod');
 const { handleZabbixError } = require('../utils/errors');
 
+// Helper functions for maintenance management
+function getMaintenanceTypeName(type) {
+    const typeNames = {
+        0: 'with_data_collection',
+        1: 'without_data_collection'
+    };
+    return typeNames[type] || 'unknown';
+}
+
+function getTimePeriodTypeName(type) {
+    const typeNames = {
+        0: 'one_time_only',
+        2: 'daily',
+        3: 'weekly', 
+        4: 'monthly'
+    };
+    return typeNames[type] || 'unknown';
+}
+
+function parseDayOfWeekBitmask(bitmask) {
+    const days = [];
+    const dayNames = {
+        1: 'Monday',
+        2: 'Tuesday', 
+        4: 'Wednesday',
+        8: 'Thursday',
+        16: 'Friday',
+        32: 'Saturday',
+        64: 'Sunday'
+    };
+    
+    for (const [bit, name] of Object.entries(dayNames)) {
+        if (bitmask & parseInt(bit)) {
+            days.push(name);
+        }
+    }
+    return days;
+}
+
+function parseMonthBitmask(bitmask) {
+    const months = [];
+    const monthNames = {
+        1: 'January',
+        2: 'February',
+        4: 'March', 
+        8: 'April',
+        16: 'May',
+        32: 'June',
+        64: 'July',
+        128: 'August',
+        256: 'September',
+        512: 'October',
+        1024: 'November',
+        2048: 'December'
+    };
+    
+    for (const [bit, name] of Object.entries(monthNames)) {
+        if (bitmask & parseInt(bit)) {
+            months.push(name);
+        }
+    }
+    return months;
+}
+
+function getProblemTagOperatorName(operator) {
+    const operatorNames = {
+        0: 'equals',
+        2: 'contains'
+    };
+    return operatorNames[operator] || 'unknown';
+}
+
+// Enhanced schema definitions
+const TimePeriodSchema = z.object({
+    timeperiod_type: z.number().int().min(0).max(4).describe('Type of time period: 0 (one time only), 2 (daily), 3 (weekly), 4 (monthly)'),
+    period: z.number().int().min(60).optional().default(3600).describe('Duration of the maintenance period in seconds (rounded down to minutes)'),
+    start_date: z.number().int().optional().describe('Date when maintenance must come into effect (Unix timestamp, for one-time only)'),
+    start_time: z.number().int().min(0).max(86399).optional().default(0).describe('Time of day when maintenance starts in seconds (for daily/weekly/monthly)'),
+    every: z.number().int().min(1).optional().default(1).describe('Interval frequency (day/week intervals or month day/week)'),
+    dayofweek: z.number().int().min(1).max(127).optional().describe('Days of week bitmask (1=Mon, 2=Tue, 4=Wed, 8=Thu, 16=Fri, 32=Sat, 64=Sun)'),
+    day: z.number().int().min(1).max(31).optional().describe('Day of month (1-31, for monthly periods)'),
+    month: z.number().int().min(1).max(4095).optional().describe('Months bitmask (1=Jan, 2=Feb, 4=Mar, etc.)')
+});
+
+const ProblemTagSchema = z.object({
+    tag: z.string().min(1).describe('Problem tag name (required)'),
+    operator: z.number().int().min(0).max(2).optional().default(2).describe('Condition operator: 0 (equals), 2 (contains)'),
+    value: z.string().optional().default('').describe('Problem tag value')
+});
+
 function registerTools(server) {
     // Get maintenance periods
     server.tool(
@@ -44,11 +134,32 @@ function registerTools(server) {
 
                 const maintenance = await api.getMaintenanceWindows(apiParams);
                 
+                // Enhanced formatting for maintenance periods
+                const formattedMaintenance = maintenance.map(m => ({
+                    ...m,
+                    active_since_readable: new Date(m.active_since * 1000).toISOString(),
+                    active_till_readable: new Date(m.active_till * 1000).toISOString(),
+                    maintenance_type_name: getMaintenanceTypeName(parseInt(m.maintenance_type)),
+                    timeperiods: m.timeperiods ? m.timeperiods.map(tp => ({
+                        ...tp,
+                        timeperiod_type_name: getTimePeriodTypeName(parseInt(tp.timeperiod_type)),
+                        start_date_readable: tp.start_date ? new Date(tp.start_date * 1000).toISOString() : undefined,
+                        start_time_readable: tp.start_time ? `${Math.floor(tp.start_time / 3600)}:${Math.floor((tp.start_time % 3600) / 60).toString().padStart(2, '0')}` : undefined,
+                        dayofweek_readable: tp.dayofweek ? parseDayOfWeekBitmask(parseInt(tp.dayofweek)) : undefined,
+                        month_readable: tp.month ? parseMonthBitmask(parseInt(tp.month)) : undefined,
+                        period_readable: tp.period ? `${Math.floor(tp.period / 3600)}h ${Math.floor((tp.period % 3600) / 60)}m` : undefined
+                    })) : undefined,
+                    tags: m.tags ? m.tags.map(tag => ({
+                        ...tag,
+                        operator_name: getProblemTagOperatorName(parseInt(tag.operator))
+                    })) : undefined
+                }));
+                
                 logger.info(`Retrieved ${maintenance.length} maintenance periods`);
                 return {
                     content: [{
                         type: 'text',
-                        text: `Found ${maintenance.length} maintenance periods:\n\n${JSON.stringify(maintenance, null, 2)}`
+                        text: `Found ${maintenance.length} maintenance periods:\n\n${JSON.stringify(formattedMaintenance, null, 2)}`
                     }]
                 };
             } catch (error) {

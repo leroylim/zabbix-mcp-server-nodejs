@@ -3,6 +3,126 @@ const api = require('../api');
 const { z } = require('zod');
 const { handleZabbixError } = require('../utils/errors');
 
+// Helper functions for script management
+function getScriptTypeName(type) {
+    const typeNames = {
+        0: 'Script',
+        1: 'IPMI', 
+        2: 'SSH',
+        3: 'Telnet',
+        4: 'Global script',
+        5: 'URL',
+        6: 'Webhook'
+    };
+    return typeNames[type] || `Unknown (${type})`;
+}
+
+function getScriptScopeName(scope) {
+    const scopeNames = {
+        1: 'Action operation',
+        2: 'Manual host action', 
+        4: 'Manual event action',
+        6: 'Manual host and event action' // 2 + 4
+    };
+    return scopeNames[scope] || `Unknown (${scope})`;
+}
+
+function getExecutionLocationName(executeOn) {
+    const locations = {
+        0: 'Zabbix agent',
+        1: 'Zabbix server', 
+        2: 'Zabbix server (proxy)'
+    };
+    return locations[executeOn] || `Unknown (${executeOn})`;
+}
+
+function getHostAccessName(hostAccess) {
+    const accessNames = {
+        2: 'Read',
+        3: 'Write'
+    };
+    return accessNames[hostAccess] || `Unknown (${hostAccess})`;
+}
+
+function getAuthTypeName(authType) {
+    const authNames = {
+        0: 'Password',
+        1: 'Public key'
+    };
+    return authNames[authType] || `Unknown (${authType})`;
+}
+
+function getManualInputValidatorTypeName(validatorType) {
+    const typeNames = {
+        0: 'Regular expression',
+        1: 'List of values'
+    };
+    return typeNames[validatorType] || `Unknown (${validatorType})`;
+}
+
+// Enhanced script formatting with human-readable information
+function formatScriptInfo(script) {
+    const formatted = {
+        ...script,
+        type_name: getScriptTypeName(parseInt(script.type || 0)),
+        scope_name: getScriptScopeName(parseInt(script.scope || 2)),
+        execute_on_name: getExecutionLocationName(parseInt(script.execute_on || 1)),
+        host_access_name: getHostAccessName(parseInt(script.host_access || 2)),
+        manual_input_enabled: script.manualinput === '1' || script.manualinput === 1,
+        new_window_enabled: script.new_window === '1' || script.new_window === 1
+    };
+
+    // Add authentication type name for SSH scripts
+    if (script.authtype !== undefined) {
+        formatted.auth_type_name = getAuthTypeName(parseInt(script.authtype));
+    }
+
+    // Add manual input validator type name
+    if (script.manualinput_validator_type !== undefined) {
+        formatted.manualinput_validator_type_name = getManualInputValidatorTypeName(parseInt(script.manualinput_validator_type));
+    }
+
+    // Enhanced parameter formatting for webhooks
+    if (script.parameters && Array.isArray(script.parameters)) {
+        formatted.parameters_formatted = script.parameters.map(param => ({
+            ...param,
+            supports_macros: true,
+            description: `Parameter '${param.name}' with value '${param.value || '(empty)'}'`
+        }));
+    }
+
+    // Add timeout formatting for webhooks
+    if (script.timeout) {
+        formatted.timeout_formatted = script.timeout.includes('s') ? script.timeout : `${script.timeout}s`;
+    }
+
+    return formatted;
+}
+
+// Webhook parameter schema
+const WebhookParameterSchema = z.object({
+    name: z.string().min(1, "Parameter name is required"),
+    value: z.string().optional().describe("Parameter value supporting macros")
+});
+
+// Manual input validation schema
+const ManualInputSchema = z.object({
+    manualinput: z.union([z.enum(['0', '1']), z.number().int().min(0).max(1)]).optional(),
+    manualinput_prompt: z.string().optional(),
+    manualinput_validator: z.string().optional(),
+    manualinput_validator_type: z.union([z.enum(['0', '1']), z.number().int().min(0).max(1)]).optional(),
+    manualinput_default_value: z.string().optional()
+}).refine((data) => {
+    const manualInputEnabled = data.manualinput === '1' || data.manualinput === 1;
+    if (manualInputEnabled) {
+        return data.manualinput_prompt && data.manualinput_validator;
+    }
+    return true;
+}, {
+    message: "Manual input requires prompt and validator when enabled",
+    path: ["manualinput"]
+});
+
 function registerTools(server) {
     // Get scripts
     server.tool(
@@ -42,11 +162,14 @@ function registerTools(server) {
 
                 const scripts = await api.getScripts(apiParams);
                 
+                // Enhanced formatting for scripts
+                const formattedScripts = scripts.map(script => formatScriptInfo(script));
+                
                 logger.info(`Retrieved ${scripts.length} scripts`);
                 return {
                     content: [{
                         type: 'text',
-                        text: `Found ${scripts.length} scripts:\n\n${JSON.stringify(scripts, null, 2)}`
+                        text: `Found ${scripts.length} scripts:\n\n${JSON.stringify(formattedScripts, null, 2)}`
                     }]
                 };
             } catch (error) {
@@ -61,32 +184,63 @@ function registerTools(server) {
     // Create script
     server.tool(
         'zabbix_create_script',
-        'Create a new script in Zabbix',
+        'Create a new script in Zabbix with full support for all script types',
         {
             name: z.string().min(1).describe('Name of the script'),
-            command: z.string().min(1).describe('Command to execute (for script type) or URL (for URL type)'),
-            type: z.number().int().min(0).max(5).describe('Type of script (0 - script, 1 - IPMI, 2 - SSH, 3 - Telnet, 4 - global script, 5 - URL)'),
-            scope: z.number().int().min(1).max(4).describe('Script scope (1 - action operation, 2 - manual host action, 4 - manual event action)'),
+            command: z.string().optional().describe('Command to execute (for script/webhook type) - not required for URL type'),
+            type: z.number().int().min(0).max(6).describe('Type of script (0 - script, 1 - IPMI, 2 - SSH, 3 - Telnet, 4 - global script, 5 - URL, 6 - webhook)'),
+            scope: z.number().int().min(1).max(7).describe('Script scope (1 - action operation, 2 - manual host action, 4 - manual event action, 6 - manual host and event)'),
             execute_on: z.number().int().min(0).max(2).optional().default(1).describe('Where to execute the script (0 - Zabbix agent, 1 - Zabbix server, 2 - Zabbix server (proxy))'),
             description: z.string().optional().describe('Description of the script'),
             groupid: z.string().optional().describe('Host group ID that the script can be run on (0 for all groups)'),
             host_access: z.number().int().min(2).max(3).optional().default(2).describe('Host permissions needed (2 - read, 3 - write)'),
             usrgrpid: z.string().optional().describe('User group ID that can execute the script (0 for all groups)'),
             confirmation: z.string().optional().describe('Confirmation text to display before executing the script'),
+            
+            // URL type properties
+            url: z.string().url().optional().describe('URL for URL-type scripts'),
+            new_window: z.number().int().min(0).max(1).optional().default(1).describe('Open URL in new window (0 - No, 1 - Yes)'),
+            
+            // Webhook type properties
+            timeout: z.string().regex(/^\d+s?$/).optional().describe('Webhook execution timeout (1-60s, e.g. "30s")'),
+            parameters: z.array(WebhookParameterSchema).optional().describe('Webhook parameters with name/value pairs'),
+            
+            // Manual input properties
+            manualinput: z.number().int().min(0).max(1).optional().describe('Accept manual input (0 - Disabled, 1 - Enabled)'),
+            manualinput_prompt: z.string().optional().describe('Manual input prompt text'),
+            manualinput_validator: z.string().optional().describe('Manual input validation pattern (regex or comma-separated list)'),
+            manualinput_validator_type: z.number().int().min(0).max(1).optional().describe('Validator type (0 - regex, 1 - list)'),
+            manualinput_default_value: z.string().optional().describe('Default value for manual input'),
+            
+            // SSH/Telnet authentication properties
             username: z.string().optional().describe('Username for SSH/Telnet scripts'),
             password: z.string().optional().describe('Password for SSH/Telnet scripts'),
             publickey: z.string().optional().describe('Public key file name for SSH scripts'),
             privatekey: z.string().optional().describe('Private key file name for SSH scripts'),
             port: z.string().optional().describe('Port for SSH/Telnet scripts'),
-            authtype: z.number().int().min(0).max(1).optional().describe('Authentication type for SSH scripts (0 - password, 1 - public key)'),
-            parameters: z.array(z.object({
-                name: z.string(),
-                value: z.string().optional()
-            })).optional().describe('Script parameters for webhook scripts')
+            authtype: z.number().int().min(0).max(1).optional().describe('Authentication type for SSH scripts (0 - password, 1 - public key)')
         },
         async (args) => {
             try {
                 const params = { ...args };
+                
+                // Type-specific validation
+                if (params.type === 5 && !params.url) {
+                    throw new Error('URL type scripts require a url parameter');
+                }
+                if (params.type === 6) {
+                    if (!params.command) {
+                        throw new Error('Webhook type scripts require a command parameter');
+                    }
+                    if (!params.timeout) {
+                        params.timeout = '30s'; // Default webhook timeout
+                    }
+                }
+                if (params.manualinput === 1) {
+                    if (!params.manualinput_prompt || !params.manualinput_validator) {
+                        throw new Error('Manual input requires both prompt and validator parameters');
+                    }
+                }
                 
                 const result = await api.createScript(params);
                 
@@ -109,19 +263,42 @@ function registerTools(server) {
     // Update script
     server.tool(
         'zabbix_update_script',
-        'Update an existing script in Zabbix',
+        'Update an existing script in Zabbix with full support for all script types',
         {
             scriptid: z.string().describe('ID of the script to update'),
             name: z.string().optional().describe('Name of the script'),
-            command: z.string().optional().describe('Command to execute (for script type) or URL (for URL type)'),
-            type: z.number().int().min(0).max(5).optional().describe('Type of script (0 - script, 1 - IPMI, 2 - SSH, 3 - Telnet, 4 - global script, 5 - URL)'),
-            scope: z.number().int().min(1).max(4).optional().describe('Script scope (1 - action operation, 2 - manual host action, 4 - manual event action)'),
+            command: z.string().optional().describe('Command to execute (for script/webhook type)'),
+            type: z.number().int().min(0).max(6).optional().describe('Type of script (0 - script, 1 - IPMI, 2 - SSH, 3 - Telnet, 4 - global script, 5 - URL, 6 - webhook)'),
+            scope: z.number().int().min(1).max(7).optional().describe('Script scope (1 - action operation, 2 - manual host action, 4 - manual event action, 6 - manual host and event)'),
             execute_on: z.number().int().min(0).max(2).optional().describe('Where to execute the script (0 - Zabbix agent, 1 - Zabbix server, 2 - Zabbix server (proxy))'),
             description: z.string().optional().describe('Description of the script'),
             groupid: z.string().optional().describe('Host group ID that the script can be run on (0 for all groups)'),
             host_access: z.number().int().min(2).max(3).optional().describe('Host permissions needed (2 - read, 3 - write)'),
             usrgrpid: z.string().optional().describe('User group ID that can execute the script (0 for all groups)'),
-            confirmation: z.string().optional().describe('Confirmation text to display before executing the script')
+            confirmation: z.string().optional().describe('Confirmation text to display before executing the script'),
+            
+            // URL type properties
+            url: z.string().url().optional().describe('URL for URL-type scripts'),
+            new_window: z.number().int().min(0).max(1).optional().describe('Open URL in new window (0 - No, 1 - Yes)'),
+            
+            // Webhook type properties
+            timeout: z.string().regex(/^\d+s?$/).optional().describe('Webhook execution timeout (1-60s, e.g. "30s")'),
+            parameters: z.array(WebhookParameterSchema).optional().describe('Webhook parameters with name/value pairs'),
+            
+            // Manual input properties
+            manualinput: z.number().int().min(0).max(1).optional().describe('Accept manual input (0 - Disabled, 1 - Enabled)'),
+            manualinput_prompt: z.string().optional().describe('Manual input prompt text'),
+            manualinput_validator: z.string().optional().describe('Manual input validation pattern (regex or comma-separated list)'),
+            manualinput_validator_type: z.number().int().min(0).max(1).optional().describe('Validator type (0 - regex, 1 - list)'),
+            manualinput_default_value: z.string().optional().describe('Default value for manual input'),
+            
+            // SSH/Telnet authentication properties
+            username: z.string().optional().describe('Username for SSH/Telnet scripts'),
+            password: z.string().optional().describe('Password for SSH/Telnet scripts'),
+            publickey: z.string().optional().describe('Public key file name for SSH scripts'),
+            privatekey: z.string().optional().describe('Private key file name for SSH scripts'),
+            port: z.string().optional().describe('Port for SSH/Telnet scripts'),
+            authtype: z.number().int().min(0).max(1).optional().describe('Authentication type for SSH scripts (0 - password, 1 - public key)')
         },
         async (args) => {
             try {

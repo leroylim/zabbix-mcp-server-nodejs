@@ -312,6 +312,94 @@ async function disableDiscoveryRules(ruleIds) {
 }
 
 /**
+ * Get network discovery rules from Zabbix
+ * @param {Object} options - Parameters for drule.get
+ * @returns {Promise<Array>} Array of network discovery rules
+ */
+async function getNetworkDiscoveryRules(options = {}) {
+    try {
+        logger.debug(`${config.logging.prefix} Getting network discovery rules`);
+        const defaultOptions = {
+            output: 'extend',
+            selectDChecks: 'extend'
+        };
+        
+        const params = { ...defaultOptions, ...options };
+        return await request('drule.get', params);
+    } catch (error) {
+        logger.error(`${config.logging.prefix} Failed to get network discovery rules:`, error.message);
+        throw new Error(`Failed to retrieve network discovery rules: ${error.message}`);
+    }
+}
+
+/**
+ * Create a new network discovery rule
+ * @param {Object} ruleData - Network discovery rule creation parameters
+ * @returns {Promise<Object>} Creation result with druleids
+ */
+async function createNetworkDiscoveryRule(ruleData) {
+    try {
+        logger.debug(`${config.logging.prefix} Creating network discovery rule: ${ruleData.name}`);
+        
+        // Validate required fields
+        if (!ruleData.name || !ruleData.iprange || !ruleData.dchecks) {
+            throw new Error("Parameters 'name', 'iprange', and 'dchecks' are required");
+        }
+        
+        const result = await request('drule.create', ruleData);
+        logger.info(`${config.logging.prefix} Created network discovery rule: ${ruleData.name} (ID: ${result.druleids[0]})`);
+        return result;
+    } catch (error) {
+        logger.error(`${config.logging.prefix} Failed to create network discovery rule:`, error.message);
+        throw new Error(`Failed to create network discovery rule: ${error.message}`);
+    }
+}
+
+/**
+ * Update an existing network discovery rule
+ * @param {Object} updateData - Network discovery rule update parameters (must include druleid)
+ * @returns {Promise<Object>} Update result with druleids
+ */
+async function updateNetworkDiscoveryRule(updateData) {
+    try {
+        logger.debug(`${config.logging.prefix} Updating network discovery rule: ${updateData.druleid}`);
+        
+        if (!updateData.druleid) {
+            throw new Error("Parameter 'druleid' is required for updating network discovery rule");
+        }
+        
+        const result = await request('drule.update', updateData);
+        logger.info(`${config.logging.prefix} Updated network discovery rule: ${updateData.druleid}`);
+        return result;
+    } catch (error) {
+        logger.error(`${config.logging.prefix} Failed to update network discovery rule:`, error.message);
+        throw new Error(`Failed to update network discovery rule: ${error.message}`);
+    }
+}
+
+/**
+ * Delete network discovery rules
+ * @param {Array<string>} ruleIds - Array of network discovery rule IDs to delete
+ * @returns {Promise<Object>} Deletion result with druleids
+ */
+async function deleteNetworkDiscoveryRules(ruleIds) {
+    try {
+        logger.debug(`${config.logging.prefix} Deleting ${ruleIds.length} network discovery rules`);
+        
+        if (!Array.isArray(ruleIds) || ruleIds.length === 0) {
+            throw new Error("Parameter 'ruleIds' must be a non-empty array");
+        }
+        
+        const result = await request('drule.delete', ruleIds);
+        logger.info(`${config.logging.prefix} Deleted ${ruleIds.length} network discovery rules`);
+        return result;
+    } catch (error) {
+        logger.error(`${config.logging.prefix} Failed to delete network discovery rules:`, error.message);
+        throw new Error(`Failed to delete network discovery rules: ${error.message}`);
+    }
+}
+
+/**
  * Get discovered hosts from discovery rules
  * @param {Object} options - Parameters for dhost.get
  * @returns {Promise<Array>} Array of discovered hosts
@@ -479,11 +567,17 @@ async function searchDiscoveryRules(criteria = {}) {
 }
 
 module.exports = {
-    // Core CRUD operations
+    // Core CRUD operations (LLD Rules)
     getDiscoveryRules,
     createDiscoveryRule,
     updateDiscoveryRule,
     deleteDiscoveryRules,
+    
+    // Network Discovery operations
+    getNetworkDiscoveryRules,
+    createNetworkDiscoveryRule,
+    updateNetworkDiscoveryRule,
+    deleteNetworkDiscoveryRules,
     
     // Enhanced query functions
     getDiscoveryRulesByHosts,

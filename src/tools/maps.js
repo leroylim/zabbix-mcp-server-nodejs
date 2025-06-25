@@ -3,6 +3,241 @@ const api = require('../api');
 const { z } = require('zod');
 const { handleZabbixError } = require('../utils/errors');
 
+// =============================================================================
+// HELPER FUNCTIONS FOR HUMAN-READABLE FORMATTING
+// =============================================================================
+
+/**
+ * Convert map element type code to human-readable name
+ * @param {string|number} type - Element type code
+ * @returns {string} Human-readable element type name
+ */
+function getElementTypeName(type) {
+    const typeNum = parseInt(type);
+    const types = {
+        0: 'Host',
+        1: 'Map', 
+        2: 'Trigger',
+        3: 'Host Group',
+        4: 'Image'
+    };
+    return types[typeNum] || `Unknown (${type})`;
+}
+
+/**
+ * Convert label type code to human-readable name
+ * @param {string|number} type - Label type code
+ * @returns {string} Human-readable label type name
+ */
+function getLabelTypeName(type) {
+    const typeNum = parseInt(type);
+    const types = {
+        0: 'Label',
+        1: 'IP Address',
+        2: 'Element Name', 
+        3: 'Status Only',
+        4: 'Nothing'
+    };
+    return types[typeNum] || `Unknown (${type})`;
+}
+
+/**
+ * Convert label location code to human-readable name
+ * @param {string|number} location - Label location code
+ * @returns {string} Human-readable label location name
+ */
+function getLabelLocationName(location) {
+    const locationNum = parseInt(location);
+    const locations = {
+        0: 'Bottom',
+        1: 'Left',
+        2: 'Right',
+        3: 'Top',
+        '-1': 'Default'
+    };
+    return locations[locationNum] || `Unknown (${location})`;
+}
+
+/**
+ * Convert link draw type code to human-readable name
+ * @param {string|number} type - Draw type code
+ * @returns {string} Human-readable draw type name
+ */
+function getDrawTypeName(type) {
+    const typeNum = parseInt(type);
+    const types = {
+        0: 'Line',
+        1: 'Bold Line',
+        2: 'Dot',
+        3: 'Dashed Line',
+        4: 'Bold Dashed Line'
+    };
+    return types[typeNum] || `Unknown (${type})`;
+}
+
+/**
+ * Convert privacy setting to human-readable name
+ * @param {string|number} privacy - Privacy setting
+ * @returns {string} Human-readable privacy name
+ */
+function getPrivacyName(privacy) {
+    const privacyNum = parseInt(privacy);
+    return privacyNum === 0 ? 'Public' : 'Private';
+}
+
+/**
+ * Convert enabled/disabled setting to human-readable name
+ * @param {string|number} enabled - Enabled setting
+ * @returns {string} Human-readable enabled status
+ */
+function getEnabledStatusName(enabled) {
+    const enabledNum = parseInt(enabled);
+    return enabledNum === 1 ? 'Enabled' : 'Disabled';
+}
+
+/**
+ * Convert value mapping type to human-readable name
+ * @param {string|number} type - Mapping type code
+ * @returns {string} Human-readable mapping type name
+ */
+function getMappingTypeName(type) {
+    const typeNum = parseInt(type);
+    const types = {
+        0: 'Exact Match',
+        1: 'Greater Than or Equal',
+        2: 'Less Than or Equal', 
+        3: 'In Range',
+        4: 'Regular Expression'
+    };
+    return types[typeNum] || `Unknown (${type})`;
+}
+
+/**
+ * Enhanced formatting for network maps
+ * @param {Object} map - Raw map object from API
+ * @returns {Object} Enhanced map with human-readable properties
+ */
+function formatMapInfo(map) {
+    return {
+        ...map,
+        label_type_name: getLabelTypeName(map.label_type),
+        label_location_name: getLabelLocationName(map.label_location),
+        privacy_name: getPrivacyName(map.private),
+        highlight_name: getEnabledStatusName(map.highlight),
+        grid_show_name: getEnabledStatusName(map.grid_show),
+        grid_align_name: getEnabledStatusName(map.grid_align),
+        markelements_name: getEnabledStatusName(map.markelements),
+        expandproblem_name: getEnabledStatusName(map.expandproblem),
+        element_count: map.selements ? map.selements.length : 0,
+        link_count: map.links ? map.links.length : 0,
+        shape_count: map.shapes ? map.shapes.length : 0,
+        line_count: map.lines ? map.lines.length : 0
+    };
+}
+
+/**
+ * Enhanced formatting for map elements
+ * @param {Array} elements - Array of map elements
+ * @returns {Array} Enhanced elements with human-readable properties
+ */
+function formatMapElements(elements) {
+    if (!Array.isArray(elements)) return elements;
+    
+    return elements.map(element => ({
+        ...element,
+        elementtype_name: getElementTypeName(element.elementtype),
+        label_location_name: getLabelLocationName(element.label_location),
+        use_iconmap_name: getEnabledStatusName(element.use_iconmap),
+        areatype_name: element.areatype === '1' ? 'Custom' : 'Automatic',
+        viewtype_name: element.viewtype === '1' ? 'Manual' : 'Automatic'
+    }));
+}
+
+/**
+ * Enhanced formatting for map links
+ * @param {Array} links - Array of map links  
+ * @returns {Array} Enhanced links with human-readable properties
+ */
+function formatMapLinks(links) {
+    if (!Array.isArray(links)) return links;
+    
+    return links.map(link => ({
+        ...link,
+        drawtype_name: getDrawTypeName(link.drawtype),
+        trigger_count: link.linktriggers ? link.linktriggers.length : 0
+    }));
+}
+
+/**
+ * Enhanced formatting for value maps
+ * @param {Object} valueMap - Raw value map object from API
+ * @returns {Object} Enhanced value map with human-readable properties
+ */
+function formatValueMapInfo(valueMap) {
+    const formatted = { ...valueMap };
+    
+    if (valueMap.mappings && Array.isArray(valueMap.mappings)) {
+        formatted.mappings = valueMap.mappings.map(mapping => ({
+            ...mapping,
+            type_name: getMappingTypeName(mapping.type)
+        }));
+        formatted.mapping_count = valueMap.mappings.length;
+    }
+    
+    return formatted;
+}
+
+/**
+ * Enhanced formatting for icon maps
+ * @param {Object} iconMap - Raw icon map object from API
+ * @returns {Object} Enhanced icon map with human-readable properties
+ */
+function formatIconMapInfo(iconMap) {
+    const formatted = { ...iconMap };
+    
+    if (iconMap.mappings && Array.isArray(iconMap.mappings)) {
+        formatted.mapping_count = iconMap.mappings.length;
+        formatted.mappings = iconMap.mappings.map(mapping => ({
+            ...mapping,
+            inventory_field_name: getInventoryFieldName(mapping.inventory_link)
+        }));
+    }
+    
+    return formatted;
+}
+
+/**
+ * Get inventory field name by number
+ * @param {string|number} fieldNum - Inventory field number (1-70)
+ * @returns {string} Human-readable field name
+ */
+function getInventoryFieldName(fieldNum) {
+    const num = parseInt(fieldNum);
+    const fields = {
+        1: 'Type', 2: 'Type (Full)', 3: 'Name', 4: 'Alias', 5: 'OS', 6: 'OS (Full)',
+        7: 'OS (Short)', 8: 'Serialno A', 9: 'Serialno B', 10: 'Tag', 11: 'Asset Tag',
+        12: 'MAC Address A', 13: 'MAC Address B', 14: 'Hardware', 15: 'Hardware (Full)',
+        16: 'Software', 17: 'Software (Full)', 18: 'Software App A', 19: 'Software App B',
+        20: 'Software App C', 21: 'Software App D', 22: 'Software App E', 23: 'Contact',
+        24: 'Location', 25: 'Location Lat', 26: 'Location Lon', 27: 'Notes', 28: 'Chassis',
+        29: 'Model', 30: 'HW Arch', 31: 'Vendor', 32: 'Contract Number', 33: 'Installer Name',
+        34: 'Deployment Status', 35: 'URL A', 36: 'URL B', 37: 'URL C', 38: 'Host Networks',
+        39: 'Host Netmask', 40: 'Host Router', 41: 'OOB IP', 42: 'OOB Netmask', 43: 'OOB Router',
+        44: 'Date HW Purchase', 45: 'Date HW Install', 46: 'Date HW Maint', 47: 'Date HW Decomm',
+        48: 'Site Address A', 49: 'Site Address B', 50: 'Site Address C', 51: 'Site City',
+        52: 'Site State', 53: 'Site Country', 54: 'Site Zip', 55: 'Site Rack', 56: 'Site Notes',
+        57: 'POC 1 Name', 58: 'POC 1 Email', 59: 'POC 1 Phone A', 60: 'POC 1 Phone B',
+        61: 'POC 1 Cell', 62: 'POC 1 Screen', 63: 'POC 1 Notes', 64: 'POC 2 Name',
+        65: 'POC 2 Email', 66: 'POC 2 Phone A', 67: 'POC 2 Phone B', 68: 'POC 2 Cell',
+        69: 'POC 2 Screen', 70: 'POC 2 Notes'
+    };
+    return fields[num] || `Field ${fieldNum}`;
+}
+
+// =============================================================================
+// TOOLS REGISTRATION
+// =============================================================================
+
 function registerTools(server) {
     // Get value maps
     server.tool(
@@ -36,11 +271,14 @@ function registerTools(server) {
 
                 const valueMaps = await api.getValueMaps(apiParams);
                 
+                // Enhance value maps with human-readable formatting
+                const enhancedValueMaps = valueMaps.map(valueMap => formatValueMapInfo(valueMap));
+                
                 logger.info(`Retrieved ${valueMaps.length} value maps`);
                 return {
                     content: [{
                         type: 'text',
-                        text: `Found ${valueMaps.length} value maps:\n\n${JSON.stringify(valueMaps, null, 2)}`
+                        text: `Found ${valueMaps.length} value maps:\n\n${JSON.stringify(enhancedValueMaps, null, 2)}`
                     }]
                 };
             } catch (error) {
@@ -185,11 +423,14 @@ function registerTools(server) {
 
                 const iconMaps = await api.getIconMaps(apiParams);
                 
+                // Enhance icon maps with human-readable formatting
+                const enhancedIconMaps = iconMaps.map(iconMap => formatIconMapInfo(iconMap));
+                
                 logger.info(`Retrieved ${iconMaps.length} icon maps`);
                 return {
                     content: [{
                         type: 'text',
-                        text: `Found ${iconMaps.length} icon maps:\n\n${JSON.stringify(iconMaps, null, 2)}`
+                        text: `Found ${iconMaps.length} icon maps:\n\n${JSON.stringify(enhancedIconMaps, null, 2)}`
                     }]
                 };
             } catch (error) {
@@ -350,11 +591,26 @@ function registerTools(server) {
 
                 const maps = await api.getMaps(apiParams);
                 
+                // Enhance maps with human-readable formatting
+                const enhancedMaps = maps.map(map => {
+                    const formattedMap = formatMapInfo(map);
+                    
+                    // Also format elements and links if included
+                    if (formattedMap.selements) {
+                        formattedMap.selements = formatMapElements(formattedMap.selements);
+                    }
+                    if (formattedMap.links) {
+                        formattedMap.links = formatMapLinks(formattedMap.links);
+                    }
+                    
+                    return formattedMap;
+                });
+                
                 logger.info(`Retrieved ${maps.length} network maps`);
                 return {
                     content: [{
                         type: 'text',
-                        text: `Found ${maps.length} network maps:\n\n${JSON.stringify(maps, null, 2)}`
+                        text: `Found ${maps.length} network maps:\n\n${JSON.stringify(enhancedMaps, null, 2)}`
                     }]
                 };
             } catch (error) {
