@@ -1,6 +1,6 @@
 {
   "name": "zabbix-mcp-server-nodejs",
-  "version": "2.0.0",
+  "version": "3.1.0",
   "description": "A comprehensive Model Context Protocol server for integrating with Zabbix monitoring systems. Provides 90+ API tools across 19 categories for complete monitoring, alerting, and infrastructure management.",
   "license": "MIT",
   "author": "Han Yong Lim <hanyong.lim@gmail.com>",

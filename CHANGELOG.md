@@ -5,6 +5,61 @@ All notable changes to the Zabbix MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2024-12-24
+
+### 🚀 Major Infrastructure Modernization & Feature Enhancement
+
+Building on the solid v3.0.0 foundation (zabbix-utils integration), this release adds significant new capabilities and modernizes the entire infrastructure.
+
+### Added
+- **🧠 Intelligence Functions**: New LLM-optimized convenience functions for enhanced AI agent integration
+- **🎫 API Token Authentication**: Modern token-based authentication support (Zabbix 5.4+)
+- **🧹 Complete Legacy Cleanup**: Removed all UpGuard references and legacy code
+- **📚 Enhanced Documentation**: Comprehensive authentication guides and API documentation
+- **🔧 Infrastructure Modernization**: Updated GitHub Actions, Docker configs, and deployment
+
+### Changed
+- **Authentication System**: Unified client with automatic token detection and fallback
+- **Project Branding**: Complete transformation from UpGuard to Zabbix across all components
+- **Repository URLs**: Fixed and standardized all GitHub repository references
+- **Test Suite**: Modernized test configurations and removed legacy test files
+- **Documentation Generation**: Updated tool extraction and documentation scripts
+
+### Fixed
+- **Schema Issues**: Resolved MCP tools parameter schema problems
+- **Response Formats**: Fixed zabbix_get_media_types MCP response formatting
+- **Version Consistency**: Aligned package.json with actual Git tag versioning (v3.x.x series)
+- **Repository References**: Corrected GitHub URLs throughout project
+
+### Removed
+- **Legacy UpGuard Code**: Eliminated all UpGuard references, utilities, and configurations
+- **Obsolete Test Files**: Cleaned up unused test files and configurations
+- **Redundant Scripts**: Removed obsolete setup and validation scripts
+
+### Infrastructure
+- **GitHub Actions**: Modernized all workflows with Zabbix branding and credentials
+- **Docker**: Updated container names and deployment configurations
+- **Documentation**: Automated generation with proper Zabbix branding
+- **Project Structure**: Cleaned and optimized file organization
+
+### Breaking Changes
+None - All changes are backward compatible with existing Zabbix integrations.
+
+---
+
+## [3.0.0] - 2024-12-19 - Zabbix-Utils Library Integration
+
+### 🔧 Major Refactoring Release
+
+**Phase 5 completed with 765% functionality enhancement:**
+- Professional zabbix-utils library integration
+- 54 enhanced functions across 8 core modules  
+- Discovery, Scripts, Media, Actions, Users, Maintenance modules refactored
+- Enterprise-grade architecture and error handling
+- Comprehensive documentation and testing
+
+---
+
 ## [2.1.0] - 2024-12-24
 
 ### 🔐 Authentication Modernization & Clean Interface
