@@ -401,6 +401,57 @@ function registerTools(server) {
         }
     );
 
+    // Update correlation
+    server.tool(
+        'zabbix_update_correlation',
+        'Update an existing event correlation in Zabbix',
+        {
+            correlationid: z.string().describe('ID of the correlation to update'),
+            name: z.string().optional().describe('Name of the correlation'),
+            description: z.string().optional().describe('Description of the correlation'),
+            status: z.number().int().min(0).max(1).optional().describe('Status: 0 (enabled), 1 (disabled)'),
+            
+            filter: z.object({
+                evaltype: z.number().int().min(0).max(3).optional().describe('Filter evaluation type'),
+                formula: z.string().optional().describe('Custom expression formula'),
+                conditions: z.array(z.object({
+                    type: z.number().int().min(0).max(5).describe('Condition type: 0 (old event tag), 1 (new event tag), 2 (new event host group), 3 (event tag pair), 4 (old event tag value), 5 (new event tag value)'),
+                    operator: z.number().int().min(0).max(3).describe('Condition operator: 0 (equals), 1 (not equals), 2 (like), 3 (not like)'),
+                    tag: z.string().optional().describe('Event tag name'),
+                    oldtag: z.string().optional().describe('Old event tag name'),
+                    newtag: z.string().optional().describe('New event tag name'),
+                    value: z.string().optional().describe('Tag value'),
+                    groupid: z.string().optional().describe('Host group ID'),
+                    formulaid: z.string().optional().describe('Formula ID')
+                })).optional().describe('Array of filter conditions')
+            }).optional().describe('Correlation filter'),
+            
+            operations: z.array(z.object({
+                type: z.number().int().min(0).max(1).describe('Operation type: 0 (close old events), 1 (close new event)')
+            })).optional().describe('Array of correlation operations')
+        },
+        async (args) => {
+            try {
+                const params = { ...args };
+                
+                const result = await api.updateCorrelation(params);
+                
+                logger.info(`Updated correlation ID ${params.correlationid}`);
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `Successfully updated correlation ID ${params.correlationid}`
+                    }]
+                };
+            } catch (error) {
+                const enhancedError = handleZabbixError(error, 'error_updating_correlation', args);
+                logger.error('Error updating correlation::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
+            }
+        }
+    );
+
     // Delete correlations
     server.tool(
         'zabbix_delete_correlations',

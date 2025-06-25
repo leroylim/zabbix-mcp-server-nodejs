@@ -12,6 +12,7 @@ const scripts = require('./scripts');
 const discovery = require('./discovery');
 const media = require('./media');
 const actions = require('./actions');
+const correlations = require('./correlations');
 const maps = require('./maps');
 const dashboards = require('./dashboards');
 const proxies = require('./proxies');
@@ -35,6 +36,7 @@ module.exports = {
     ...discovery,
     ...media,
     ...actions,
+    ...correlations,
     ...maps,
     ...dashboards,
     ...proxies,
