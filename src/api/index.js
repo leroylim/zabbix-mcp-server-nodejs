@@ -18,6 +18,7 @@ const proxies = require('./proxies');
 const services = require('./services');
 const configuration = require('./configuration');
 const intelligence = require('./intelligence');
+const graphs = require('./graphs');
 
 module.exports = {
     ...client,
@@ -39,5 +40,6 @@ module.exports = {
     ...proxies,
     ...services,
     ...configuration,
-    ...intelligence
+    ...intelligence,
+    ...graphs
 }; 

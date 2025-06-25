@@ -19,6 +19,7 @@ const proxyTools = require('./proxies');
 const configurationTools = require('./configuration');
 const serviceTools = require('./services');
 const intelligenceTools = require('./intelligence');
+const graphTools = require('./graphs');
 // Import other tool categories as they are created
 
 function registerAllTools(server) {
@@ -42,7 +43,8 @@ function registerAllTools(server) {
         { name: 'proxies', module: proxyTools },
         { name: 'configuration', module: configurationTools },
         { name: 'services', module: serviceTools },
-        { name: 'intelligence', module: intelligenceTools }
+        { name: 'intelligence', module: intelligenceTools },
+        { name: 'graphs', module: graphTools }
     ];
     
     for (const { name, module } of toolCategories) {
