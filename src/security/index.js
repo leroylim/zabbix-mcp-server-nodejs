@@ -62,7 +62,7 @@ class SecurityManager {
       result.issues.push('API key too short (minimum 32 characters)');
     }
 
-    // Check for UUID format (common in UpGuard)
+    // Check for UUID format (common in Zabbix)
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(apiKey)) {
       result.issues.push('API key should be in UUID format');
@@ -289,7 +289,7 @@ class SecurityManager {
 
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv('aes-256-gcm', Buffer.from(this.config.encryptionKey, 'base64'), iv);
-    cipher.setAAD(Buffer.from('upguard-mcp-server'));
+    cipher.setAAD(Buffer.from('zabbix-mcp-server'));
 
     let encrypted = cipher.update(data, 'utf8', 'hex');
     encrypted += cipher.final('hex');
@@ -317,7 +317,7 @@ class SecurityManager {
     const iv = Buffer.from(encryptedData.iv, 'hex');
     const decipher = crypto.createDecipheriv('aes-256-gcm', Buffer.from(this.config.encryptionKey, 'base64'), iv);
     
-    decipher.setAAD(Buffer.from('upguard-mcp-server'));
+    decipher.setAAD(Buffer.from('zabbix-mcp-server'));
     decipher.setAuthTag(Buffer.from(tag, 'hex'));
 
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');

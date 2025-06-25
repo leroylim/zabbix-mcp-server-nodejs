@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
+const { handleZabbixError } = require('../utils/errors');
 
 function registerTools(server) {
     // Get triggers
@@ -59,8 +60,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting triggers:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_triggers', args);
+                logger.error('Error getting triggers::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -91,8 +94,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error creating trigger:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_creating_trigger', args);
+                logger.error('Error creating trigger::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -124,8 +129,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error updating trigger:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_updating_trigger', args);
+                logger.error('Error updating trigger::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -151,8 +158,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error deleting triggers:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_deleting_triggers', args);
+                logger.error('Error deleting triggers::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );

@@ -1,8 +1,8 @@
 // Jest setup file for common configuration and mocks
 
 // Mock environment variables for testing
-process.env.UPGUARD_API_KEY = process.env.UPGUARD_API_KEY || 'test-api-key-for-testing';
-process.env.UPGUARD_API_URL = process.env.UPGUARD_API_URL || 'https://cyber-risk.upguard.com/api/public';
+process.env.ZABBIX_API_URL = process.env.ZABBIX_API_URL || 'https://monitoring.sipef.com/api_jsonrpc.php';
+process.env.ZABBIX_API_TOKEN = process.env.ZABBIX_API_TOKEN || 'test-api-token-for-testing';
 process.env.NODE_ENV = 'test';
 process.env.LOG_LEVEL = 'error';
 

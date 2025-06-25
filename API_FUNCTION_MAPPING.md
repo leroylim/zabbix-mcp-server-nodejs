@@ -77,6 +77,8 @@ This document shows the correct function names to use when calling the Zabbix AP
 - ✅ `api.usersApi.delete()` → ✅ `api.deleteUsers()` **DONE**
 - ✅ `api.usersApi.getUserGroups()` → ✅ `api.getUserGroups()` **DONE**
 - ✅ `api.usersApi.createUserGroup()` → ✅ `api.createUserGroup()` **DONE**
+- ✅ `api.usersApi.updateUserGroup()` → ✅ `api.updateUserGroup()` **DONE**
+- ✅ `api.usersApi.deleteUserGroups()` → ✅ `api.deleteUserGroups()` **DONE**
 
 ### Scripts ✅ FIXED
 - ✅ `api.scriptsApi.get()` → ✅ `api.getScripts()` **DONE**

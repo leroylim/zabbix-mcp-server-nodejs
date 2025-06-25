@@ -10,12 +10,12 @@ const config = require('../config');
 async function getMediaTypes(options = {}) {
     // Use the exact same simple approach as TypeScript Zabbix Utils
     const params = {
-        output: 'extend',
+            output: 'extend',
         ...options
-    };
-    
+        };
+        
     // Direct API call without any transformation
-    return await request('mediatype.get', params);
+        return await request('mediatype.get', params);
 }
 
 /**

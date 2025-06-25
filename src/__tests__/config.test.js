@@ -14,35 +14,36 @@ describe('Configuration', () => {
   });
 
   describe('Default Configuration', () => {
-    test('should have correct default API configuration', () => {
-      expect(config.api.baseUrl).toBe('https://cyber-risk.upguard.com/api/public');
+    test('should have correct default Zabbix configuration', () => {
+      expect(config.api.url).toBeDefined();
       expect(config.api.timeout).toBe(120000);
-      expect(config.api.key).toBe('test-api-key-for-testing');
+      expect(config.api.ignoreSelfSignedCert).toBe(true);
+      expect(config.api.authMethod).toBe('none');
     });
 
     test('should have correct default transport configuration', () => {
       expect(config.transport.mode).toBe('stdio');
       expect(config.transport.http.port).toBe(3000);
       expect(config.transport.http.host).toBe('localhost');
-      expect(config.transport.http.sessionManagement).toBe(true);
+      expect(config.transport.http.sessionManagement).toBe(false);
     });
 
     test('should have logging configuration', () => {
-      expect(config.logging.prefix).toBe('[Upguard API Client]');
+      expect(config.logging.prefix).toBe('[Zabbix API Client]');
     });
   });
 
   describe('Environment Variable Override', () => {
-    test('should override API configuration from environment', () => {
-      process.env.UPGUARD_API_URL = 'https://custom.api.url';
-      process.env.UPGUARD_API_KEY = 'custom-key';
-      process.env.UPGUARD_REQUEST_TIMEOUT = '60000';
+    test('should override Zabbix configuration from environment', () => {
+      process.env.ZABBIX_API_URL = 'https://custom.zabbix.server/api_jsonrpc.php';
+      process.env.ZABBIX_API_TOKEN = 'custom-token';
+      process.env.ZABBIX_REQUEST_TIMEOUT = '60000';
 
       delete require.cache[require.resolve('../config')];
       const customConfig = require('../config');
 
-      expect(customConfig.api.baseUrl).toBe('https://custom.api.url');
-      expect(customConfig.api.key).toBe('custom-key');
+      expect(customConfig.api.url).toBe('https://custom.zabbix.server/api_jsonrpc.php');
+      expect(customConfig.api.apiToken).toBe('custom-token');
       expect(customConfig.api.timeout).toBe(60000);
     });
 
@@ -62,7 +63,7 @@ describe('Configuration', () => {
     });
 
     test('should handle invalid timeout gracefully', () => {
-      process.env.UPGUARD_REQUEST_TIMEOUT = 'invalid';
+      process.env.ZABBIX_REQUEST_TIMEOUT = 'invalid';
 
       delete require.cache[require.resolve('../config')];
       const customConfig = require('../config');
@@ -80,22 +81,16 @@ describe('Configuration', () => {
     });
   });
 
-  test('should have valid API configuration', () => {
+  test('should have valid Zabbix configuration', () => {
     expect(config).toBeDefined();
     expect(config.api).toBeDefined();
-    expect(config.api.baseUrl).toBeDefined();
+    expect(config.api.url).toBeDefined();
     expect(config.api.timeout).toBeDefined();
     expect(typeof config.api.timeout).toBe('number');
   });
 
-  test('should have API key configured', () => {
-    expect(config.api.key).toBeDefined();
-    expect(typeof config.api.key).toBe('string');
-    expect(config.api.key.length).toBeGreaterThan(0);
-  });
-
-  test('should have valid base URL', () => {
-    expect(config.api.baseUrl).toMatch(/^https?:\/\//);
+  test('should have valid Zabbix URL', () => {
+    expect(config.api.url).toMatch(/^https?:\/\//);
   });
 
   test('should have reasonable timeout value', () => {

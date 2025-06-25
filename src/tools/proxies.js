@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
+const { handleZabbixError } = require('../utils/errors');
 
 function registerTools(server) {
     // Get proxies
@@ -45,8 +46,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting proxies:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_proxies', args);
+                logger.error('Error getting proxies::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -98,8 +101,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error creating proxy:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_creating_proxy', args);
+                logger.error('Error creating proxy::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -152,8 +157,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error updating proxy:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_updating_proxy', args);
+                logger.error('Error updating proxy::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -179,8 +186,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error deleting proxies:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_deleting_proxies', args);
+                logger.error('Error deleting proxies::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );

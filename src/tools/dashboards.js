@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
+const { handleZabbixError } = require('../utils/errors');
 
 function registerTools(server) {
     // Get dashboards
@@ -47,8 +48,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting dashboards:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_dashboards', args);
+                logger.error('Error getting dashboards::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -61,7 +64,7 @@ function registerTools(server) {
             name: z.string().min(1).describe('Name of the dashboard'),
             userid: z.string().optional().describe('ID of the user that owns the dashboard. Defaults to the current API user if not set by a SuperAdmin'),
             private: z.number().int().min(0).max(1).optional().default(1).describe('Dashboard sharing type: 0 (public), 1 (private)'),
-            display_period: z.number().int().min(10).max(31536000).optional().default(30).describe('Dashboard refresh interval in seconds'),
+            display_period: z.enum([0, 10, 30, 60, 120, 600, 1800, 3600]).optional().default(30).describe('Dashboard page display period (in seconds). Possible values: 0, 10, 30, 60, 120, 600, 1800, 3600. Default: 0 (will use the default page display period)'),
             auto_start: z.number().int().min(0).max(1).optional().default(1).describe('Automatically start dashboard slideshow: 0 (disabled), 1 (enabled)'),
             
             // Dashboard pages
@@ -73,15 +76,15 @@ function registerTools(server) {
                 widgets: z.array(z.object({
                     type: z.string().describe('Widget type (e.g., "clock", "graph", "plaintext", "url")'),
                     name: z.string().optional().describe('Widget name'),
-                    x: z.number().int().min(0).max(23).describe('Horizontal position of the widget (0-23)'),
-                    y: z.number().int().min(0).max(62).describe('Vertical position of the widget (0-62)'),
-                    width: z.number().int().min(1).max(24).describe('Width of the widget (1-24)'),
-                    height: z.number().int().min(2).max(32).describe('Height of the widget (2-32)'),
+                    x: z.number().int().min(0).max(71).describe('Horizontal position of the widget (0-71)'),
+                    y: z.number().int().min(0).max(63).describe('Vertical position of the widget (0-63)'),
+                    width: z.number().int().min(1).max(72).describe('Width of the widget (1-72)'),
+                    height: z.number().int().min(1).max(64).describe('Height of the widget (1-64)'),
                     view_mode: z.number().int().min(0).max(1).optional().default(0).describe('Widget view mode: 0 (default), 1 (hidden header)'),
                     
                     // Widget fields (configuration)
                     fields: z.array(z.object({
-                        type: z.number().int().min(0).max(7).describe('Field type: 0 (integer), 1 (string), 2 (host group), 3 (host), 4 (item), 5 (item prototype), 6 (graph), 7 (graph prototype)'),
+                        type: z.number().int().min(0).max(13).describe('Field type: 0 (integer), 1 (string), 2 (host group), 3 (host), 4 (item), 5 (item prototype), 6 (graph), 7 (graph prototype), 8 (map), 9 (service), 10 (SLA), 11 (user), 12 (action), 13 (media type)'),
                         name: z.string().describe('Field name'),
                         value: z.union([z.string(), z.number()]).describe('Field value')
                     })).optional().describe('Widget configuration fields')
@@ -113,8 +116,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error creating dashboard:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_creating_dashboard', args);
+                logger.error('Error creating dashboard::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -138,13 +143,13 @@ function registerTools(server) {
                     widgetid: z.string().optional().describe('ID of existing widget to update'),
                     type: z.string().describe('Widget type'),
                     name: z.string().optional().describe('Widget name'),
-                    x: z.number().int().min(0).max(23).describe('Horizontal position'),
-                    y: z.number().int().min(0).max(62).describe('Vertical position'),
-                    width: z.number().int().min(1).max(24).describe('Width'),
-                    height: z.number().int().min(2).max(32).describe('Height'),
+                    x: z.number().int().min(0).max(71).describe('Horizontal position'),
+                    y: z.number().int().min(0).max(63).describe('Vertical position'),
+                    width: z.number().int().min(1).max(72).describe('Width'),
+                    height: z.number().int().min(1).max(64).describe('Height'),
                     view_mode: z.number().int().min(0).max(1).optional().describe('Widget view mode'),
                     fields: z.array(z.object({
-                        type: z.number().int().min(0).max(7).describe('Field type'),
+                        type: z.number().int().min(0).max(13).describe('Field type: 0 (integer), 1 (string), 2 (host group), 3 (host), 4 (item), 5 (item prototype), 6 (graph), 7 (graph prototype), 8 (map), 9 (service), 10 (SLA), 11 (user), 12 (action), 13 (media type)'),
                         name: z.string().describe('Field name'),
                         value: z.union([z.string(), z.number()]).describe('Field value')
                     })).optional().describe('Widget fields')
@@ -167,8 +172,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error updating dashboard:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_updating_dashboard', args);
+                logger.error('Error updating dashboard::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -194,8 +201,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error deleting dashboards:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_deleting_dashboards', args);
+                logger.error('Error deleting dashboards::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );

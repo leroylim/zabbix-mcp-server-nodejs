@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
+const { handleZabbixError } = require('../utils/errors');
 const schemas = require('./schemas');
 
 function registerTools(server) {
@@ -38,8 +39,10 @@ function registerTools(server) {
                 };
                 
             } catch (error) {
-                logger.error('Error getting media types:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_media_types', args);
+                logger.error('Error getting media types::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -113,8 +116,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error creating media type:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_creating_media_type', args);
+                logger.error('Error creating media type::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -149,8 +154,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error updating media type:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_updating_media_type', args);
+                logger.error('Error updating media type::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -176,8 +183,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error deleting media types:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_deleting_media_types', args);
+                logger.error('Error deleting media types::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -210,8 +219,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error testing media type:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_testing_media_type', args);
+                logger.error('Error testing media type::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -260,8 +271,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting user media:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_user_media', args);
+                logger.error('Error getting user media::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -333,8 +346,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting alerts:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_alerts', args);
+                logger.error('Error getting alerts::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );

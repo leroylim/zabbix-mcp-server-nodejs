@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
+const { handleZabbixError } = require('../utils/errors');
 
 function registerTools(server) {
     // Get items
@@ -54,8 +55,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting items:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_items', args);
+                logger.error('Error getting items::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -94,8 +97,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error creating item:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_creating_item', args);
+                logger.error('Error creating item::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -131,8 +136,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error updating item:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_updating_item', args);
+                logger.error('Error updating item::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -158,8 +165,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error deleting items:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_deleting_items', args);
+                logger.error('Error deleting items::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -200,8 +209,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting latest data:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_latest_data', args);
+                logger.error('Error getting latest data::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );

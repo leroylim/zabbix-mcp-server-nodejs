@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
+const { handleZabbixError } = require('../utils/errors');
 
 function registerTools(server) {
     // Get discovery rules
@@ -57,8 +58,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting discovery rules:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_discovery_rules', args);
+                logger.error('Error getting discovery rules::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -111,8 +114,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error creating discovery rule:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_creating_discovery_rule', args);
+                logger.error('Error creating discovery rule::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -146,8 +151,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error updating discovery rule:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_updating_discovery_rule', args);
+                logger.error('Error updating discovery rule::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -173,8 +180,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error deleting discovery rules:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_deleting_discovery_rules', args);
+                logger.error('Error deleting discovery rules::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -230,8 +239,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting discovered hosts:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_discovered_hosts', args);
+                logger.error('Error getting discovered hosts::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -282,8 +293,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting discovered services:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_discovered_services', args);
+                logger.error('Error getting discovered services::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );

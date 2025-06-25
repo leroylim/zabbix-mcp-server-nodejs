@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
+const { handleZabbixError } = require('../utils/errors');
 
 function registerTools(server) {
     // Get templates
@@ -49,8 +50,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting templates:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_templates', args);
+                logger.error('Error getting templates::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -81,8 +84,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error creating template:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_creating_template', args);
+                logger.error('Error creating template::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -114,8 +119,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error updating template:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_updating_template', args);
+                logger.error('Error updating template::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -141,8 +148,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error deleting templates:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_deleting_templates', args);
+                logger.error('Error deleting templates::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -169,8 +178,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error linking templates to host:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_linking_templates_to_host', args);
+                logger.error('Error linking templates to host::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -197,8 +208,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error unlinking templates from host:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_unlinking_templates_from_host', args);
+                logger.error('Error unlinking templates from host::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );

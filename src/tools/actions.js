@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
+const { handleZabbixError } = require('../utils/errors');
 
 function registerTools(server) {
     // Get actions
@@ -61,8 +62,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting actions:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_actions', args);
+                logger.error('Error getting actions::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -205,8 +208,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error creating action:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_creating_action', args);
+                logger.error('Error creating action::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -242,8 +247,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error updating action:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_updating_action', args);
+                logger.error('Error updating action::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -269,8 +276,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error deleting actions:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_deleting_actions', args);
+                logger.error('Error deleting actions::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -317,8 +326,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting correlations:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_correlations', args);
+                logger.error('Error getting correlations::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -365,8 +376,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error creating correlation:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_creating_correlation', args);
+                logger.error('Error creating correlation::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -392,8 +405,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error deleting correlations:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_deleting_correlations', args);
+                logger.error('Error deleting correlations::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );

@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
+const { handleZabbixError } = require('../utils/errors');
 
 function registerTools(server) {
     // Get services
@@ -57,8 +58,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting services:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_services', args);
+                logger.error('Error getting services::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -121,8 +124,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error creating service:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_creating_service', args);
+                logger.error('Error creating service::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -176,8 +181,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error updating service:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_updating_service', args);
+                logger.error('Error updating service::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -203,8 +210,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error deleting services:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_deleting_services', args);
+                logger.error('Error deleting services::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -234,8 +243,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting service SLA:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_service_sla', args);
+                logger.error('Error getting service SLA::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );

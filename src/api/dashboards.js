@@ -176,16 +176,17 @@ async function createDashboard(params) {
         throw new Error('Dashboard name is required');
     }
     
+    // Only apply defaults for truly optional parameters, not user-provided ones
     const defaultParams = {
-        private: 0,
-        auto_start: 0,
-        pages: [{
-            name: 'Page 1',
-            display_period: 30,
-            widgets: []
-        }],
         ...params
     };
+    
+    // Only add default pages if none provided
+    if (!defaultParams.pages) {
+        defaultParams.pages = [{
+            widgets: []
+        }];
+    }
     
     return await request('dashboard.create', defaultParams);
 }

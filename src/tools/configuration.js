@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
+const { handleZabbixError } = require('../utils/errors');
 
 function registerTools(server) {
     // Export configuration
@@ -48,8 +49,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error exporting configuration:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_exporting_configuration', args);
+                logger.error('Error exporting configuration::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -163,8 +166,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error importing configuration:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_importing_configuration', args);
+                logger.error('Error importing configuration::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -255,8 +260,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error comparing configuration:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_comparing_configuration', args);
+                logger.error('Error comparing configuration::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );

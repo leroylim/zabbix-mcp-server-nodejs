@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
+const { handleZabbixError } = require('../utils/errors');
 
 function registerTools(server) {
     // Get value maps
@@ -43,8 +44,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting value maps:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_value_maps', args);
+                logger.error('Error getting value maps::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -76,8 +79,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error creating value map:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_creating_value_map', args);
+                logger.error('Error creating value map::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -111,8 +116,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error updating value map:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_updating_value_map', args);
+                logger.error('Error updating value map::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -138,8 +145,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error deleting value maps:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_deleting_value_maps', args);
+                logger.error('Error deleting value maps::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -184,8 +193,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting icon maps:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_icon_maps', args);
+                logger.error('Error getting icon maps::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -217,8 +228,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error creating icon map:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_creating_icon_map', args);
+                logger.error('Error creating icon map::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -252,8 +265,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error updating icon map:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_updating_icon_map', args);
+                logger.error('Error updating icon map::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -279,8 +294,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error deleting icon maps:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_deleting_icon_maps', args);
+                logger.error('Error deleting icon maps::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -341,8 +358,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting network maps:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_network_maps', args);
+                logger.error('Error getting network maps::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -494,8 +513,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error creating network map:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_creating_network_map', args);
+                logger.error('Error creating network map::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -535,8 +556,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error updating network map:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_updating_network_map', args);
+                logger.error('Error updating network map::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -562,8 +585,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error deleting network maps:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_deleting_network_maps', args);
+                logger.error('Error deleting network maps::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );

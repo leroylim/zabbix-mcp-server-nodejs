@@ -33,13 +33,17 @@ jobs:
     - name: Run unit tests
       run: npm test
       env:
-        UPGUARD_API_KEY: test-api-key-for-testing
+        ZABBIX_URL: http://localhost:8080/zabbix
+        ZABBIX_USER: test-user
+        ZABBIX_PASSWORD: test-password
         NODE_ENV: test
     
     - name: Run tests with coverage
       run: npm run test:coverage
       env:
-        UPGUARD_API_KEY: test-api-key-for-testing
+        ZABBIX_URL: http://localhost:8080/zabbix
+        ZABBIX_USER: test-user
+        ZABBIX_PASSWORD: test-password
         NODE_ENV: test
     
     - name: Upload coverage to Codecov
@@ -52,7 +56,9 @@ jobs:
     - name: Run integration tests
       run: npm run test:integration
       env:
-        UPGUARD_API_KEY: test-api-key-for-testing
+        ZABBIX_URL: http://localhost:8080/zabbix
+        ZABBIX_USER: test-user
+        ZABBIX_PASSWORD: test-password
         TEST_MODE: http
         NODE_ENV: test
     
@@ -67,7 +73,9 @@ jobs:
           }
         }'
       env:
-        UPGUARD_API_KEY: test-api-key-for-testing
+        ZABBIX_URL: http://localhost:8080/zabbix
+        ZABBIX_USER: test-user
+        ZABBIX_PASSWORD: test-password
         NODE_ENV: test
 
   security:

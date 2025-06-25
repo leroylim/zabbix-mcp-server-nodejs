@@ -119,7 +119,7 @@ Thumbs.db
 
 # Original files to ignore (as requested)
 /index.js
-upguardApiClient.js
+zabbixApiClient.js
 
 # Test artifacts
 test-results/

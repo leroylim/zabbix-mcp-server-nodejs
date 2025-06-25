@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
+const { handleZabbixError } = require('../utils/errors');
 
 function registerTools(server) {
     // Get maintenance periods
@@ -51,8 +52,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting maintenance periods:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_maintenance_periods', args);
+                logger.error('Error getting maintenance periods::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -104,8 +107,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error creating maintenance period:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_creating_maintenance_period', args);
+                logger.error('Error creating maintenance period::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -138,8 +143,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error updating maintenance period:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_updating_maintenance_period', args);
+                logger.error('Error updating maintenance period::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -165,8 +172,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error deleting maintenance periods:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_deleting_maintenance_periods', args);
+                logger.error('Error deleting maintenance periods::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );

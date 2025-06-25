@@ -12,6 +12,7 @@
 const { AsyncZabbixAPI } = require('zabbix-utils');
 const config = require('../config');
 const { logger } = require('../utils/logger');
+const { ZabbixApiError, handleZabbixError } = require('../utils/errors');
 
 class ZabbixClient {
     constructor() {
@@ -80,8 +81,10 @@ class ZabbixClient {
         } catch (error) {
             this.isConnected = false;
             this.lastConnectionAttempt = Date.now();
-            logger.error(`${config.logging.prefix} Failed to initialize Zabbix API client:`, error.message);
-            throw new Error(`Zabbix API initialization failed: ${error.message}`);
+            const enhancedError = handleZabbixError(error, 'client.initialize', clientConfig);
+            logger.error(`${config.logging.prefix} Failed to initialize Zabbix API client:`, enhancedError.message);
+            logger.debug(`${config.logging.prefix} Full error details:`, enhancedError.details);
+            throw new Error(`Zabbix API initialization failed: ${enhancedError.message}`);
         }
     }
 
@@ -127,7 +130,9 @@ class ZabbixClient {
                 return isAuth;
             }
         } catch (error) {
-            logger.warn(`${config.logging.prefix} Connection check failed:`, error.message);
+            const enhancedError = handleZabbixError(error, 'client.checkConnection');
+            logger.warn(`${config.logging.prefix} Connection check failed:`, enhancedError.message);
+            logger.debug(`${config.logging.prefix} Connection error details:`, enhancedError.details);
             this.isConnected = false;
             return false;
         }
@@ -145,7 +150,9 @@ class ZabbixClient {
                 }
                 logger.info(`${config.logging.prefix} Disconnected from Zabbix API`);
             } catch (error) {
-                logger.warn(`${config.logging.prefix} Error during logout:`, error.message);
+                const enhancedError = handleZabbixError(error, 'client.logout');
+                logger.warn(`${config.logging.prefix} Error during logout:`, enhancedError.message);
+                logger.debug(`${config.logging.prefix} Logout error details:`, enhancedError.details);
             }
         }
         
@@ -181,7 +188,14 @@ class ZabbixClient {
             logger.debug(`${config.logging.prefix} API call successful: ${method}`);
             return result;
         } catch (error) {
-            logger.error(`${config.logging.prefix} API call failed: ${method}`, error.message);
+            // Enhanced error handling with full Zabbix API details
+            const enhancedError = handleZabbixError(error, method, params);
+            logger.error(`${config.logging.prefix} API call failed: ${method}`, enhancedError.message);
+            logger.debug(`${config.logging.prefix} Full API error details for ${method}:`, {
+                error: enhancedError.details,
+                params: params,
+                stack: error.stack
+            });
             
             // Check if it's an authentication error and try to reconnect (only for password auth)
             if (config.api.authMethod === 'password' && error.message && (
@@ -194,12 +208,21 @@ class ZabbixClient {
                 await this.initialize();
                 
                 // Retry the request once
+                try {
                 const retryClient = await this.getClient();
                 const result = await retryClient[object][methodName](params);
+                    logger.info(`${config.logging.prefix} Retry successful for ${method}`);
                 return result;
+                } catch (retryError) {
+                    const retryEnhancedError = handleZabbixError(retryError, method, params);
+                    logger.error(`${config.logging.prefix} Retry failed for ${method}:`, retryEnhancedError.message);
+                    logger.debug(`${config.logging.prefix} Retry error details:`, retryEnhancedError.details);
+                    throw new Error(`${retryEnhancedError.message} (Retry also failed)`);
+                }
             }
             
-            throw error;
+            // Create a new error with enhanced message for better debugging
+            throw new Error(enhancedError.message);
         }
     }
 }

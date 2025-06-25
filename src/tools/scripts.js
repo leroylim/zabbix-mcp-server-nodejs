@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
+const { handleZabbixError } = require('../utils/errors');
 
 function registerTools(server) {
     // Get scripts
@@ -49,8 +50,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting scripts:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_scripts', args);
+                logger.error('Error getting scripts::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -95,8 +98,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error creating script:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_creating_script', args);
+                logger.error('Error creating script::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -132,8 +137,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error updating script:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_updating_script', args);
+                logger.error('Error updating script::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -159,8 +166,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error deleting scripts:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_deleting_scripts', args);
+                logger.error('Error deleting scripts::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -197,8 +206,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error executing script:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_executing_script', args);
+                logger.error('Error executing script::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -251,8 +262,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting script execution history:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_script_execution_history', args);
+                logger.error('Error getting script execution history::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );

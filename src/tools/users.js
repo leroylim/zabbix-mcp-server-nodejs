@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
+const { handleZabbixError } = require('../utils/errors');
 
 function registerTools(server) {
     // Get users
@@ -49,8 +50,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting users:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_users', args);
+                logger.error('Error getting users::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -97,8 +100,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error creating user:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_creating_user', args);
+                logger.error('Error creating user::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -136,8 +141,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error updating user:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_updating_user', args);
+                logger.error('Error updating user::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -163,8 +170,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error deleting users:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_deleting_users', args);
+                logger.error('Error deleting users::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -213,8 +222,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting user groups:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_user_groups', args);
+                logger.error('Error getting user groups::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -247,8 +258,76 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error creating user group:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_creating_user_group', args);
+                logger.error('Error creating user group::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
+            }
+        }
+    );
+
+    // Update user group
+    server.tool(
+        'zabbix_update_usergroup',
+        'Update an existing user group in Zabbix',
+        {
+            usrgrpid: z.string().describe('ID of the user group to update'),
+            name: z.string().optional().describe('Name of the user group'),
+            gui_access: z.number().int().min(0).max(3).optional().describe('Frontend access (0 - System default, 1 - Internal, 2 - LDAP, 3 - Disabled)'),
+            users_status: z.number().int().min(0).max(1).optional().describe('Whether the user group is enabled (0 - enabled, 1 - disabled)'),
+            debug_mode: z.number().int().min(0).max(1).optional().describe('Whether debug mode is enabled (0 - disabled, 1 - enabled)'),
+            rights: z.array(z.object({
+                permission: z.number().int().min(0).max(3),
+                id: z.string()
+            })).optional().describe('Permissions of the user group')
+        },
+        async (args) => {
+            try {
+                const params = { ...args };
+                
+                const result = await api.updateUserGroup(params);
+                
+                logger.info(`Updated user group ID ${params.usrgrpid}`);
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `Successfully updated user group ID ${params.usrgrpid}`
+                    }]
+                };
+            } catch (error) {
+                const enhancedError = handleZabbixError(error, 'error_updating_user_group', args);
+                logger.error('Error updating user group::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
+            }
+        }
+    );
+
+    // Delete user groups
+    server.tool(
+        'zabbix_delete_usergroups',
+        'Delete user groups from Zabbix',
+        {
+            usrgrpids: z.array(z.string()).min(1).describe('Array of user group IDs to delete')
+        },
+        async (args) => {
+            try {
+                const { usrgrpids } = args;
+                
+                const result = await api.deleteUserGroups(usrgrpids);
+                
+                logger.info(`Deleted ${usrgrpids.length} user groups`);
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `Successfully deleted ${usrgrpids.length} user groups: ${usrgrpids.join(', ')}`
+                    }]
+                };
+            } catch (error) {
+                const enhancedError = handleZabbixError(error, 'error_deleting_user_groups', args);
+                logger.error('Error deleting user groups::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );

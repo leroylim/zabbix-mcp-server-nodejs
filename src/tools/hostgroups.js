@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
+const { handleZabbixError } = require('../utils/errors');
 
 function registerTools(server) {
     // Get host groups
@@ -44,8 +45,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting host groups:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_host_groups', args);
+                logger.error('Error getting host groups::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -71,8 +74,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error creating host group:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_creating_host_group', args);
+                logger.error('Error creating host group::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -99,8 +104,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error updating host group:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_updating_host_group', args);
+                logger.error('Error updating host group::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -126,8 +133,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error deleting host groups:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_deleting_host_groups', args);
+                logger.error('Error deleting host groups::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );

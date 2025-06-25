@@ -1,5 +1,5 @@
 /**
- * UpGuard CyberRisk MCP Server - Tool Extraction Script
+ * Zabbix MCP Server - Tool Extraction Script
  * 
  * This script extracts actual tool definitions from the MCP server
  * for use in documentation generation.
@@ -41,7 +41,7 @@ async function extractToolDefinitions() {
     
     // Create a server instance
     const server = new McpServer({
-      name: 'upguard_cyberrisk_mcp_server_extractor',
+      name: 'zabbix_mcp_server_extractor',
       version: '1.2.0',
       description: 'Tool extraction server'
     });

@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
+const { handleZabbixError } = require('../utils/errors');
 
 function registerTools(server) {
     // Get history data
@@ -52,8 +53,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting history data:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_history_data', args);
+                logger.error('Error getting history data::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -107,8 +110,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting trends data:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_trends_data', args);
+                logger.error('Error getting trends data::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );
@@ -190,8 +195,10 @@ function registerTools(server) {
                     }]
                 };
             } catch (error) {
-                logger.error('Error getting item history range:', error.message);
-                throw error;
+                const enhancedError = handleZabbixError(error, 'error_getting_item_history_range', args);
+                logger.error('Error getting item history range::', enhancedError.message);
+                logger.debug('Full error details:', enhancedError.details);
+                throw new Error(enhancedError.message);
             }
         }
     );

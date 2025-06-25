@@ -8,9 +8,9 @@ describe('MCP Server', () => {
   beforeEach(() => {
     // Create a fresh server instance for each test
     server = new McpServer({
-      name: 'upguard_cyberrisk_mcp_server_test',
-      version: '1.2.0',
-      description: 'Test MCP server for UpGuard CyberRisk API'
+      name: 'zabbix_mcp_server_test',
+      version: '1.0.0',
+      description: 'Test MCP server for Zabbix API'
     });
   });
 
@@ -18,9 +18,9 @@ describe('MCP Server', () => {
     test('should create server instance successfully', () => {
       expect(server).toBeDefined();
       // Note: In new MCP SDK, server info is stored in _serverInfo
-      expect(server.server._serverInfo.name).toBe('upguard_cyberrisk_mcp_server_test');
-      expect(server.server._serverInfo.version).toBe('1.2.0');
-      expect(server.server._serverInfo.description).toBe('Test MCP server for UpGuard CyberRisk API');
+      expect(server.server._serverInfo.name).toBe('zabbix_mcp_server_test');
+      expect(server.server._serverInfo.version).toBe('1.0.0');
+      expect(server.server._serverInfo.description).toBe('Test MCP server for Zabbix API');
     });
 
     test('should have registerTools method', () => {

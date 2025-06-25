@@ -1,5 +1,5 @@
 /**
- * UpGuard CyberRisk MCP Server - Documentation Export Script
+ * Zabbix MCP Server - Documentation Export Script
  * 
  * This script exports documentation to various formats
  * 
@@ -147,7 +147,7 @@ function exportToInsomnia(openApiPath, outputDir) {
       _type: "export",
       __export_format: 4,
       __export_date: new Date().toISOString(),
-      __export_source: "upguard-cyberrisk-mcp-server",
+              __export_source: "zabbix-mcp-server",
       resources: [
         {
           _id: "wrk_base",
@@ -266,7 +266,7 @@ function exportSummary(extractedToolsPath, outputDir) {
     const extractedData = JSON.parse(fs.readFileSync(extractedToolsPath, 'utf8'));
     
     const summary = {
-      title: "UpGuard CyberRisk MCP Server API Summary",
+              title: "Zabbix MCP Server API Summary",
       version: "1.2.0",
       generatedAt: new Date().toISOString(),
       statistics: {

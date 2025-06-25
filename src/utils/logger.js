@@ -1,5 +1,5 @@
 /**
- * UpGuard CyberRisk MCP Server - Logger Utility
+ * Zabbix MCP Server - Logger Utility
  * 
  * Copyright (c) 2024 Han Yong Lim
  * 
