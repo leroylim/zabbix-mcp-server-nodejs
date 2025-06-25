@@ -7,44 +7,36 @@ function registerTools(server) {
     // Get media types
     server.tool(
         'zabbix_get_media_types',
-        'Get media types from Zabbix with filtering and output options',
+        'Get media types from Zabbix',
         {
-            mediatypeids: z.array(z.string()).optional().describe('Return only media types with the given IDs'),
-            output: schemas.outputFields.optional().default('extend').describe('Object properties to be returned'),
-            selectMessageTemplates: schemas.outputFields.optional().describe('Return message templates used by the media type'),
-            selectUsers: schemas.outputFields.optional().describe('Return users that use the media type'),
-            filter: z.record(z.any()).optional().describe('Return only media types that match the given filter'),
-            search: z.record(z.any()).optional().describe('Return only media types that match the given wildcard search'),
-            sortfield: z.union([z.string(), z.array(z.string())]).optional().describe('Field(s) to sort by (e.g., "name", ["type", "name"])'),
-            sortorder: schemas.sortOrder.optional().describe('Sort order'),
-            limit: z.number().int().positive().optional().describe('Limit the number of records returned')
+            output: z.union([
+                z.literal('extend'),
+                z.literal('count'),
+                z.array(z.string())
+            ]).optional().default('extend').describe('Output fields: "extend" (all fields), "count" (count only), or array of specific field names'),
+            mediatypeids: z.array(z.string()).optional().describe('Return only media types with the given media type IDs'),
+            filter: z.record(z.any()).optional().describe('Return only those results that exactly match the given filter'),
+            search: z.record(z.any()).optional().describe('Return results that match the given wildcard search'),
+            searchWildcardsEnabled: z.boolean().optional().describe('If set to true return results that contain the search criteria in any part of the field value'),
+            sortfield: z.union([z.string(), z.array(z.string())]).optional().describe('Sort the result by the given properties'),
+            sortorder: z.enum(['ASC', 'DESC']).optional().describe('Sort order'),
+            limit: z.number().optional().describe('Limit the number of records returned'),
+            preservekeys: z.boolean().optional().describe('Use IDs as keys in the resulting array')
         },
         async (args) => {
             try {
-                const params = { ...args };
-                
-                const apiParams = {
-                    output: params.output || 'extend',
-                    sortfield: params.sortfield || 'name',
-                    sortorder: params.sortorder || 'ASC'
-                };
-
-                if (params.mediatypeids) apiParams.mediatypeids = params.mediatypeids;
-                if (params.selectMessageTemplates) apiParams.selectMessageTemplates = params.selectMessageTemplates;
-                if (params.selectUsers) apiParams.selectUsers = params.selectUsers;
-                if (params.filter) apiParams.filter = params.filter;
-                if (params.search) apiParams.search = params.search;
-                if (params.limit) apiParams.limit = params.limit;
-
-                const mediaTypes = await api.getMediaTypes(apiParams);
+                const mediaTypes = await api.getMediaTypes(args);
                 
                 logger.info(`Retrieved ${mediaTypes.length} media types`);
+                
+                // Return structured MCP response format like other tools
                 return {
                     content: [{
                         type: 'text',
-                        text: `Found ${mediaTypes.length} media types:\n\n${JSON.stringify(mediaTypes, null, 2)}`
+                        text: `Retrieved ${mediaTypes.length} media types:\n\n${JSON.stringify(mediaTypes, null, 2)}`
                     }]
                 };
+                
             } catch (error) {
                 logger.error('Error getting media types:', error.message);
                 throw error;

@@ -1,7 +1,6 @@
 const { request } = require('./zabbix-client');
 const { logger } = require('../utils/logger');
 const config = require('../config');
-const legacyClient = require('../../zabbixApiClient');
 
 /**
  * Get media types from Zabbix
@@ -9,13 +8,13 @@ const legacyClient = require('../../zabbixApiClient');
  * @returns {Promise<Array>} Array of media types
  */
 async function getMediaTypes(options = {}) {
-    // Set default output if not provided, just like legacy client
+    // Use the exact same simple approach as TypeScript Zabbix Utils
     const params = {
         output: 'extend',
         ...options
     };
     
-    // Pass parameters directly to Zabbix API, exactly like legacy client
+    // Direct API call without any transformation
     return await request('mediatype.get', params);
 }
 
