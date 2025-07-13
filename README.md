@@ -870,43 +870,56 @@ Get SLA data for services
 
 ## 🏗️ Architecture
 
-### Project Structure
+The Zabbix MCP Server is designed with a modular and layered architecture to ensure a clear separation of concerns, making it easier to maintain and extend. The two main layers are the **API Layer** and the **Tool Layer**.
 
+### System Architecture Diagram
+
+```mermaid
+graph TD
+    subgraph "MCP Client (e.g., Claude Desktop, Cursor IDE)"
+        A[User] --> B{MCP Client};
+    end
+
+    subgraph "Zabbix MCP Server"
+        B -- MCP --> C{MCP Server};
+        C -- Registers --> D[Tool Layer];
+        D -- Uses --> E[API Layer];
+    end
+
+    subgraph "Zabbix"
+        E -- Zabbix API --> F((Zabbix Server));
+    end
+
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style F fill:#f9f,stroke:#333,stroke-width:2px
 ```
-├── src/
-│   ├── api/                 # API layer modules
-│   │   ├── client.js        # Zabbix API client
-│   │   ├── hosts.js         # Host management API
-│   │   ├── items.js         # Items API
-│   │   ├── triggers.js      # Triggers API
-│   │   ├── maps.js          # Maps API
-│   │   ├── dashboards.js    # Dashboards API
-│   │   ├── services.js      # Business services API
-│   │   └── ...              # Other API modules
-│   ├── tools/               # MCP tools layer
-│   │   ├── auth.js          # Authentication tools
-│   │   ├── hosts.js         # Host management tools
-│   │   ├── items.js         # Items tools
-│   │   ├── triggers.js      # Triggers tools
-│   │   ├── maps.js          # Maps tools
-│   │   ├── dashboards.js    # Dashboard tools
-│   │   ├── services.js      # Services tools
-│   │   └── index.js         # Tool registration
-│   ├── utils/
-│   │   └── logger.js        # Logging utility
-│   └── index.js             # Main server entry point
-├── docs/                    # Documentation
-├── examples/                # Usage examples
-└── scripts/                 # Utility scripts
-```
+
+### API Layer
+
+The API layer, located in `src/api`, is responsible for all communication with the Zabbix API. It consists of the following key components:
+
+*   **`zabbix-client.js`**: A singleton class that manages the connection to the Zabbix API. It handles both API token and username/password authentication, as well as connection retries and error handling.
+*   **API Modules**: Each file in the `src/api` directory (e.g., `hosts.js`, `items.js`) corresponds to a specific Zabbix API module. These modules use the `zabbix-client.js` to make API calls and return the results.
+
+### Tool Layer
+
+The tool layer, located in `src/tools`, is responsible for exposing the functionality of the API layer as MCP tools. It consists of the following key components:
+
+*   **Tool Modules**: Each file in the `src/tools` directory (e.g., `hosts.js`, `items.js`) defines a set of related MCP tools. These tools use the API layer to interact with the Zabbix API.
+*   **Schema Validation**: The tools use `Zod` to define schemas for their input parameters. This ensures that the tools are called with the correct arguments and provides clear error messages to the user.
+*   **Tool Registration**: The `registerTools` function in each tool module is responsible for registering the tools with the MCP server.
 
 ### Design Principles
 
-1. **Modular Architecture**: Clean separation between API layer and tools layer
-2. **Type Safety**: Comprehensive Zod schema validation for all inputs
-3. **Error Handling**: Robust error handling with detailed logging
-4. **Consistency**: Uniform patterns across all tool categories
-5. **Extensibility**: Easy to add new tools and functionality
+1.  **Modular Architecture**: Clean separation between the API layer and the tool layer.
+2.  **Type Safety**: Comprehensive `Zod` schema validation for all tool inputs.
+3.  **Error Handling**: Robust error handling with detailed logging.
+4.  **Consistency**: Uniform patterns across all tool categories.
+5.  **Extensibility**: Easy to add new tools and functionality.
+
+## Code Review
+
+A comprehensive code review was conducted to identify areas for improvement in the codebase. The findings are documented in the `CODE_REVIEW.md` file.
 
 ## 🔧 Development
 
