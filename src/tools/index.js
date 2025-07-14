@@ -20,6 +20,7 @@ const configurationTools = require('./configuration');
 const serviceTools = require('./services');
 const intelligenceTools = require('./intelligence');
 const graphTools = require('./graphs');
+const analysisTools = require('./analysis');
 // Import other tool categories as they are created
 
 function registerAllTools(server) {
@@ -44,7 +45,8 @@ function registerAllTools(server) {
         { name: 'configuration', module: configurationTools },
         { name: 'services', module: serviceTools },
         { name: 'intelligence', module: intelligenceTools },
-        { name: 'graphs', module: graphTools }
+        { name: 'graphs', module: graphTools },
+        { name: 'analysis', module: analysisTools }
     ];
     
     for (const { name, module } of toolCategories) {
