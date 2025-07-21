@@ -190,7 +190,6 @@ function registerTools(server) {
             }
         }
     );
-}
 
     // Tool: Audit Unmonitored Hosts
     server.tool(
@@ -229,7 +228,6 @@ function registerTools(server) {
             }
         }
     );
-}
 
     // Tool: Template Audit
     server.tool(
