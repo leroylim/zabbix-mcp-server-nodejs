@@ -1,4 +1,3 @@
-const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
 const { handleZabbixError } = require('../utils/errors');
@@ -33,7 +32,7 @@ const graphObjectSchema = z.object({
     gitems: z.array(graphItemSchema).min(1).describe("Graph items - at least one item is required.")
 });
 
-function registerTools(server) {
+function registerTools(server, { logger }) {
     // Get graphs
     server.tool(
         'zabbix_get_graphs',

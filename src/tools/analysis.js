@@ -1,11 +1,10 @@
 const api = require('../api');
-const { logger } = require('../utils/logger');
 const { z } = require('zod');
 const schemas = require('./schemas');
 const diff = require('diff');
 
 // Helper function to resolve host identifiers (ID, technical name, visible name, or IP) to host IDs
-async function resolveHostIdentifier(identifier) {
+async function resolveHostIdentifier(identifier, logger) {
     if (!identifier) {
         return { hostId: null, error: "No host identifier provided." };
     }
@@ -50,7 +49,7 @@ async function resolveHostIdentifier(identifier) {
 }
 
 
-function registerTools(server) {
+function registerTools(server, { logger }) {
     // Tool: Get Host Diagnostics
     server.tool(
         'zabbix_get_host_diagnostics',
@@ -61,7 +60,7 @@ function registerTools(server) {
         },
         async ({ hostIdentifier, historyItemKeys }) => {
             try {
-                const { hostId, error } = await resolveHostIdentifier(hostIdentifier);
+                const { hostId, error } = await resolveHostIdentifier(hostIdentifier, logger);
 
                 if (error) {
                     return { content: [{ type: 'text', text: error }] };
@@ -144,10 +143,10 @@ function registerTools(server) {
         },
         async ({ hostIdentifierA, hostIdentifierB }) => {
             try {
-                const { hostId: hostIdA, error: errorA } = await resolveHostIdentifier(hostIdentifierA);
+                const { hostId: hostIdA, error: errorA } = await resolveHostIdentifier(hostIdentifierA, logger);
                 if (errorA) return { content: [{ type: 'text', text: `Error for Host A: ${errorA}` }] };
 
-                const { hostId: hostIdB, error: errorB } = await resolveHostIdentifier(hostIdentifierB);
+                const { hostId: hostIdB, error: errorB } = await resolveHostIdentifier(hostIdentifierB, logger);
                 if (errorB) return { content: [{ type: 'text', text: `Error for Host B: ${errorB}` }] };
 
                 const [hostA] = await api.getHosts({

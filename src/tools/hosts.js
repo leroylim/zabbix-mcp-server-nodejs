@@ -1,5 +1,4 @@
 const api = require('../api');
-const { logger } = require('../utils/logger');
 const { z } = require('zod');
 const schemas = require('./schemas');
 
@@ -114,7 +113,7 @@ const inventorySchema = z.object({
 });
 
 // Helper function to resolve host identifiers (ID, technical name, visible name, or IP) to host IDs
-async function resolveHostIdentifiers(identifiers) {
+async function resolveHostIdentifiers(identifiers, logger) {
     if (!identifiers || identifiers.length === 0) {
         return { resolvedHostIds: [], errors: ["No host identifiers provided."] };
     }
@@ -184,7 +183,7 @@ async function resolveHostIdentifiers(identifiers) {
     return { resolvedHostIds: Array.from(resolvedHostIds), errors: localErrors };
 }
 
-function registerTools(server) {
+function registerTools(server, { logger }) {
     // Tool: Get Hosts
     server.tool(
         'zabbix_host_get',
@@ -226,7 +225,7 @@ function registerTools(server) {
                 let resolutionMessages = [];
 
                 if (args.hostIdentifiers && args.hostIdentifiers.length > 0) {
-                    const { resolvedHostIds, errors } = await resolveHostIdentifiers(args.hostIdentifiers);
+                    const { resolvedHostIds, errors } = await resolveHostIdentifiers(args.hostIdentifiers, logger);
                     
                     if (errors.length > 0) {
                         resolutionMessages.push(...errors.map(e => `Resolution error: ${e}`));

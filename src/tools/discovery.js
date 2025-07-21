@@ -1,4 +1,3 @@
-const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
 const { handleZabbixError } = require('../utils/errors');
@@ -105,7 +104,7 @@ const DiscoveryCheckSchema = z.object({
     allow_redirect: z.number().int().min(0).max(1).optional().default(0).describe('Allow ICMP redirects (0=fail, 1=success)')
 });
 
-function registerTools(server) {
+function registerTools(server, { logger }) {
     // Get network discovery rules (drule)
     server.tool(
         'zabbix_get_network_discovery_rules',

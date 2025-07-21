@@ -1,4 +1,3 @@
-const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
 const { handleZabbixError } = require('../utils/errors');
@@ -60,7 +59,7 @@ const filterSchema = z.object({
   }
 });
 
-function registerTools(server) {
+function registerTools(server, { logger }) {
     // Get actions
     server.tool(
         'zabbix_get_actions',

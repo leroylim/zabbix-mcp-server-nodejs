@@ -1,9 +1,8 @@
-const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
 const { handleZabbixError } = require('../utils/errors');
 
-function registerTools(server) {
+function registerTools(server, { logger }) {
     // Get dashboards
     server.tool(
         'zabbix_get_dashboards',

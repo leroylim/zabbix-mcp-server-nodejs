@@ -18,7 +18,7 @@ describe('Configuration', () => {
       expect(config.api.url).toBeDefined();
       expect(config.api.timeout).toBe(120000);
       expect(config.api.ignoreSelfSignedCert).toBe(true);
-      expect(config.api.authMethod).toBe('none');
+      expect(config.api.authMethod).toBe('token');
     });
 
     test('should have correct default transport configuration', () => {

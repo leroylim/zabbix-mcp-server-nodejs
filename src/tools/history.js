@@ -1,4 +1,3 @@
-const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
 const { handleZabbixError } = require('../utils/errors');
@@ -26,7 +25,7 @@ function getSeverityName(severity) {
     return severityNames[severity] || `Level ${severity}`;
 }
 
-function registerTools(server) {
+function registerTools(server, { logger }) {
     // Get history data with enhanced type-specific support
     server.tool(
         'zabbix_get_history',

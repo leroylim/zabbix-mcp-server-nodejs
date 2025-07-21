@@ -6,11 +6,10 @@
  */
 
 const api = require('../api');
-const { logger } = require('../utils/logger');
 const { z } = require('zod');
 const schemas = require('./schemas');
 
-function registerTools(server) {
+function registerTools(server, { logger }) {
     // Tool: Get Infrastructure Health
     server.tool(
         'zabbix_get_infrastructure_health',

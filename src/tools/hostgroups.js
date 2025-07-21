@@ -1,4 +1,3 @@
-const { logger } = require('../utils/logger');
 const api = require('../api');
 const { z } = require('zod');
 const { handleZabbixError } = require('../utils/errors');
@@ -11,7 +10,7 @@ const hostgroupSchema = z.object({
     uuid: z.string().optional().describe('Universal unique identifier for linking imported host groups')
 });
 
-function registerTools(server) {
+function registerTools(server, { logger }) {
     // Get host groups with enhanced schema
     server.tool(
         'zabbix_get_hostgroups',

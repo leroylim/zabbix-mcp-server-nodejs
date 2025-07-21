@@ -52,7 +52,7 @@ function registerAllTools(server) {
     for (const { name, module } of toolCategories) {
         try {
             if (module && typeof module.registerTools === 'function') {
-                module.registerTools(server);
+                module.registerTools(server, { logger });
                 logger.info(`Registered tools from ${name}`);
             } else {
                 logger.warn(`No registerTools function found in ${name}`);

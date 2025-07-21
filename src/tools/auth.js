@@ -1,9 +1,8 @@
 const api = require('../api');
 const config = require('../config');
-const { logger } = require('../utils/logger');
 const { z } = require('zod');
 
-function registerTools(server) {
+function registerTools(server, { logger }) {
     // Tool: Get API Version
     server.tool(
         'zabbix_get_api_version',
